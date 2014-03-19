@@ -1,0 +1,474 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9A0107BE187D52E2007F5471 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A0107BD187D52E2007F5471 /* Foundation.framework */; };
+		9A0107F2187D5EC2007F5471 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A0107F0187D5EC1007F5471 /* AudioToolbox.framework */; };
+		9A0107F3187D5EC2007F5471 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A0107F1187D5EC1007F5471 /* AVFoundation.framework */; };
+		9A42CD3F187D920E00DC072B /* AVToolkit.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A42CD33187D920E00DC072B /* AVToolkit.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A42CD42187D920E00DC072B /* AVTAudioSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A42CD37187D920E00DC072B /* AVTAudioSession.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A42CD43187D920E00DC072B /* AVTAudioSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A42CD38187D920E00DC072B /* AVTAudioSession.m */; };
+		9A56D99018C9DE2C00762006 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A6AF246187D951800B3C4E7 /* CoreFoundation.framework */; };
+		9A56D99618C9DE2C00762006 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9A56D99418C9DE2C00762006 /* InfoPlist.strings */; };
+		9A56D99C18C9DE4600762006 /* AVTAudioSessionMuteCheck.caf in Resources */ = {isa = PBXBuildFile; fileRef = 9A56D99B18C9DE4600762006 /* AVTAudioSessionMuteCheck.caf */; };
+		9A91DB1018A906BD0029526A /* AVTPlayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A91DB0E18A906BD0029526A /* AVTPlayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A91DB1118A906BD0029526A /* AVTPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A91DB0F18A906BD0029526A /* AVTPlayer.m */; };
+		9A98532B18A3B06800A7722E /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A98532A18A3B06800A7722E /* MediaPlayer.framework */; };
+		9AB07C1418842D9300BB4C5B /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9AB07C1318842D9300BB4C5B /* CoreTelephony.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9A0107B8187D52E2007F5471 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		9A0107BA187D52E2007F5471 /* libAVToolkit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libAVToolkit.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A0107BD187D52E2007F5471 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		9A0107CE187D52E2007F5471 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		9A0107F0187D5EC1007F5471 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		9A0107F1187D5EC1007F5471 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		9A42CD33187D920E00DC072B /* AVToolkit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AVToolkit.h; sourceTree = "<group>"; };
+		9A42CD37187D920E00DC072B /* AVTAudioSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AVTAudioSession.h; sourceTree = "<group>"; };
+		9A42CD38187D920E00DC072B /* AVTAudioSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AVTAudioSession.m; sourceTree = "<group>"; };
+		9A56D98F18C9DE2C00762006 /* AVToolkitResources.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AVToolkitResources.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A56D99318C9DE2C00762006 /* AVToolkitResources-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "AVToolkitResources-Info.plist"; sourceTree = "<group>"; };
+		9A56D99518C9DE2C00762006 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		9A56D99718C9DE2C00762006 /* AVToolkitResources-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AVToolkitResources-Prefix.pch"; sourceTree = "<group>"; };
+		9A56D99B18C9DE4600762006 /* AVTAudioSessionMuteCheck.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = AVTAudioSessionMuteCheck.caf; sourceTree = "<group>"; };
+		9A6AF246187D951800B3C4E7 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		9A91DB0E18A906BD0029526A /* AVTPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AVTPlayer.h; sourceTree = "<group>"; };
+		9A91DB0F18A906BD0029526A /* AVTPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AVTPlayer.m; sourceTree = "<group>"; };
+		9A98532A18A3B06800A7722E /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
+		9AB07C1318842D9300BB4C5B /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9A0107B7187D52E2007F5471 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9AB07C1418842D9300BB4C5B /* CoreTelephony.framework in Frameworks */,
+				9A98532B18A3B06800A7722E /* MediaPlayer.framework in Frameworks */,
+				9A0107BE187D52E2007F5471 /* Foundation.framework in Frameworks */,
+				9A0107F2187D5EC2007F5471 /* AudioToolbox.framework in Frameworks */,
+				9A0107F3187D5EC2007F5471 /* AVFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A56D98C18C9DE2C00762006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A56D99018C9DE2C00762006 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9A0107B1187D52E2007F5471 = {
+			isa = PBXGroup;
+			children = (
+				9A42CD30187D920E00DC072B /* AVToolkit */,
+				9A56D99118C9DE2C00762006 /* AVToolkitResources */,
+				9A0107BC187D52E2007F5471 /* Frameworks */,
+				9A0107BB187D52E2007F5471 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9A0107BB187D52E2007F5471 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9A0107BA187D52E2007F5471 /* libAVToolkit.a */,
+				9A56D98F18C9DE2C00762006 /* AVToolkitResources.bundle */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9A0107BC187D52E2007F5471 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9A98532A18A3B06800A7722E /* MediaPlayer.framework */,
+				9A0107F0187D5EC1007F5471 /* AudioToolbox.framework */,
+				9A0107F1187D5EC1007F5471 /* AVFoundation.framework */,
+				9A0107BD187D52E2007F5471 /* Foundation.framework */,
+				9A0107CE187D52E2007F5471 /* UIKit.framework */,
+				9A6AF246187D951800B3C4E7 /* CoreFoundation.framework */,
+				9AB07C1318842D9300BB4C5B /* CoreTelephony.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9A42CD30187D920E00DC072B /* AVToolkit */ = {
+			isa = PBXGroup;
+			children = (
+				9A42CD33187D920E00DC072B /* AVToolkit.h */,
+				9A42CD34187D920E00DC072B /* Classes */,
+			);
+			path = AVToolkit;
+			sourceTree = "<group>";
+		};
+		9A42CD34187D920E00DC072B /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				9A42CD37187D920E00DC072B /* AVTAudioSession.h */,
+				9A42CD38187D920E00DC072B /* AVTAudioSession.m */,
+				9A91DB0E18A906BD0029526A /* AVTPlayer.h */,
+				9A91DB0F18A906BD0029526A /* AVTPlayer.m */,
+			);
+			path = Classes;
+			sourceTree = "<group>";
+		};
+		9A56D99118C9DE2C00762006 /* AVToolkitResources */ = {
+			isa = PBXGroup;
+			children = (
+				9A56D99B18C9DE4600762006 /* AVTAudioSessionMuteCheck.caf */,
+				9A56D99218C9DE2C00762006 /* Supporting Files */,
+			);
+			path = AVToolkitResources;
+			sourceTree = "<group>";
+		};
+		9A56D99218C9DE2C00762006 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				9A56D99318C9DE2C00762006 /* AVToolkitResources-Info.plist */,
+				9A56D99418C9DE2C00762006 /* InfoPlist.strings */,
+				9A56D99718C9DE2C00762006 /* AVToolkitResources-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		9A010813187D9025007F5471 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A42CD42187D920E00DC072B /* AVTAudioSession.h in Headers */,
+				9A91DB1018A906BD0029526A /* AVTPlayer.h in Headers */,
+				9A42CD3F187D920E00DC072B /* AVToolkit.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		9A0107B9187D52E2007F5471 /* AVToolkit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A0107DD187D52E2007F5471 /* Build configuration list for PBXNativeTarget "AVToolkit" */;
+			buildPhases = (
+				9A0107B6187D52E2007F5471 /* Sources */,
+				9A0107B7187D52E2007F5471 /* Frameworks */,
+				9A0107B8187D52E2007F5471 /* CopyFiles */,
+				9A010813187D9025007F5471 /* Headers */,
+				9A6AF290187D9AA200B3C4E7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AVToolkit;
+			productName = AVToolkit;
+			productReference = 9A0107BA187D52E2007F5471 /* libAVToolkit.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		9A56D98E18C9DE2C00762006 /* AVToolkitResources */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A56D99A18C9DE2C00762006 /* Build configuration list for PBXNativeTarget "AVToolkitResources" */;
+			buildPhases = (
+				9A56D98B18C9DE2C00762006 /* Sources */,
+				9A56D98C18C9DE2C00762006 /* Frameworks */,
+				9A56D98D18C9DE2C00762006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AVToolkitResources;
+			productName = AVToolkitResources;
+			productReference = 9A56D98F18C9DE2C00762006 /* AVToolkitResources.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9A0107B2187D52E2007F5471 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0500;
+				ORGANIZATIONNAME = "Danish Broadcasting Corporation";
+			};
+			buildConfigurationList = 9A0107B5187D52E2007F5471 /* Build configuration list for PBXProject "AVToolkit" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 9A0107B1187D52E2007F5471;
+			productRefGroup = 9A0107BB187D52E2007F5471 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9A0107B9187D52E2007F5471 /* AVToolkit */,
+				9A56D98E18C9DE2C00762006 /* AVToolkitResources */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9A56D98D18C9DE2C00762006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A56D99C18C9DE4600762006 /* AVTAudioSessionMuteCheck.caf in Resources */,
+				9A56D99618C9DE2C00762006 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A6AF290187D9AA200B3C4E7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9A0107B6187D52E2007F5471 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A91DB1118A906BD0029526A /* AVTPlayer.m in Sources */,
+				9A42CD43187D920E00DC072B /* AVTAudioSession.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A56D98B18C9DE2C00762006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		9A56D99418C9DE2C00762006 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9A56D99518C9DE2C00762006 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		9A0107DB187D52E2007F5471 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				EXECUTABLE_PREFIX = "";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "@rpath";
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				MACH_O_TYPE = staticlib;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRIVATE_HEADERS_FOLDER_PATH = "$(PUBLIC_HEADERS_FOLDER_PATH)/Private";
+				PRODUCT_NAME = AVToolkit;
+				PUBLIC_HEADERS_FOLDER_PATH = ../../Headers/AVToolkit;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = debugging;
+				SYMROOT = "$(SRCROOT)/Build/Products";
+			};
+			name = Debug;
+		};
+		9A0107DC187D52E2007F5471 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				EXECUTABLE_PREFIX = "";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "@rpath";
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				MACH_O_TYPE = staticlib;
+				OTHER_LDFLAGS = "-ObjC";
+				PRIVATE_HEADERS_FOLDER_PATH = "$(PUBLIC_HEADERS_FOLDER_PATH)/Private";
+				PRODUCT_NAME = AVToolkit;
+				PUBLIC_HEADERS_FOLDER_PATH = ../../Headers/AVToolkit;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = debugging;
+				SYMROOT = "$(SRCROOT)/Build/Products";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		9A0107DE187D52E2007F5471 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				DSTROOT = /tmp/AVToolkit.dst;
+				EXECUTABLE_PREFIX = lib;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "AVToolkit/AVToolkit-Prefix.pch";
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = AVToolkit;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		9A0107DF187D52E2007F5471 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				DSTROOT = /tmp/AVToolkit.dst;
+				EXECUTABLE_PREFIX = lib;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "AVToolkit/AVToolkit-Prefix.pch";
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = AVToolkit;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		9A56D99818C9DE2C00762006 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "AVToolkitResources/AVToolkitResources-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "AVToolkitResources/AVToolkitResources-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Debug;
+		};
+		9A56D99918C9DE2C00762006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "AVToolkitResources/AVToolkitResources-Prefix.pch";
+				INFOPLIST_FILE = "AVToolkitResources/AVToolkitResources-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9A0107B5187D52E2007F5471 /* Build configuration list for PBXProject "AVToolkit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A0107DB187D52E2007F5471 /* Debug */,
+				9A0107DC187D52E2007F5471 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9A0107DD187D52E2007F5471 /* Build configuration list for PBXNativeTarget "AVToolkit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A0107DE187D52E2007F5471 /* Debug */,
+				9A0107DF187D52E2007F5471 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9A56D99A18C9DE2C00762006 /* Build configuration list for PBXNativeTarget "AVToolkitResources" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A56D99818C9DE2C00762006 /* Debug */,
+				9A56D99918C9DE2C00762006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9A0107B2187D52E2007F5471 /* Project object */;
+}
