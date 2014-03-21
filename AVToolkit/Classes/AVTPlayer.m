@@ -471,7 +471,7 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 
 - (void)handlePlayerItemBufferEmptyChanged:(NSDictionary *)change {
     if (change[NSKeyValueChangeNewKey] && [change[NSKeyValueChangeNewKey] boolValue]) {
-        if (self.state == AVTPlayerStatePaused) {
+        if (!isPlaying) {
             isReconnecting = YES;
         } else {
             [self setState:(isSeeking) ? AVTPlayerStateSeeking : AVTPlayerStateReconnecting];

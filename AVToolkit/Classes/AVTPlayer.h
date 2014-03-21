@@ -43,7 +43,6 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
 
 - (void)playURL:(NSURL *)URL;
 - (void)play;
-- (void)pause;
 - (void)stop;
 
 @property(nonatomic, readonly) NSArray *log;
