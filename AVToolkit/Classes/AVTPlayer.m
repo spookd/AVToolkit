@@ -90,14 +90,9 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 
 - (id)initPlayer {
     if (self = [super init]) {
+        [self setupPlayer:nil];
+        
         log = NSMutableArray.array;
-        
-        player      = [[AVPlayer alloc] init];
-        playerLayer = [AVPlayerLayer playerLayerWithPlayer:player];
-        
-        [player addObserver:self forKeyPath:@"currentItem" options:observationOptions context:&AVPlayerItemChangedContext];
-        [player addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerStatusContext];
-        [player addObserver:self forKeyPath:@"rate" options:observationOptions context:&AVPlayerRateContext];
         
         [NSNotificationCenter.defaultCenter addObserver:self
                                                selector:@selector(applicationDidEnterBackground)
@@ -133,6 +128,53 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     [NSNotificationCenter.defaultCenter removeObserver:self];
 }
 
+#pragma mark - Player setup/teardown
+- (void)setupPlayer:(AVPlayerItem *)item {
+    if (![NSThread.currentThread isEqual:NSThread.mainThread]) {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [self setupPlayer:item];
+        });
+        
+        return;
+    }
+    
+    [self teardownPlayer];
+    
+    if (item && ![item isKindOfClass:NSNull.class]) {
+        DBG(@"-- Adding observers");
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(handlePlayerItemDidPlayToEnd:) name:AVPlayerItemDidPlayToEndTimeNotification object:item];
+        [item addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerItemStatusContext];
+        [item addObserver:self forKeyPath:@"playbackBufferEmpty" options:observationOptions context:&AVPlayerItemBufferEmptyContext];
+        [item addObserver:self forKeyPath:@"playbackLikelyToKeepUp" options:observationOptions context:&AVPlayerItemLikelyToKeepUpContext];
+    }
+    
+    player      = (item) ? [[AVPlayer alloc] initWithPlayerItem:item] : [[AVPlayer alloc] init];
+    playerLayer = [AVPlayerLayer playerLayerWithPlayer:player];
+    
+    [player addObserver:self forKeyPath:@"currentItem" options:observationOptions context:&AVPlayerItemChangedContext];
+    [player addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerStatusContext];
+    [player addObserver:self forKeyPath:@"rate" options:observationOptions context:&AVPlayerRateContext];
+}
+
+- (void)teardownPlayer {
+    if (!player)
+        return;
+    
+    if (player.currentItem && ![player.currentItem isKindOfClass:NSNull.class]) {
+        DBG(@"-- Removing old observers");
+        [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:player.currentItem];
+        [player.currentItem removeObserver:self forKeyPath:@"status" context:&AVPlayerItemStatusContext];
+        [player.currentItem removeObserver:self forKeyPath:@"playbackBufferEmpty" context:&AVPlayerItemBufferEmptyContext];
+        [player.currentItem removeObserver:self forKeyPath:@"playbackLikelyToKeepUp" context:&AVPlayerItemLikelyToKeepUpContext];
+    }
+    
+    [player removeObserver:self forKeyPath:@"currentItem" context:&AVPlayerItemChangedContext];
+    [player removeObserver:self forKeyPath:@"status" context:&AVPlayerStatusContext];
+    [player removeObserver:self forKeyPath:@"rate" context:&AVPlayerRateContext];
+    
+    player = nil;
+}
+
 #pragma mark - Internal
 
 - (void)log:(NSString *)message {
@@ -145,14 +187,34 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 - (void)reloadPlayerItem {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.25f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [player replaceCurrentItemWithPlayerItem:nil];
-        [player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithURL:URL]];
+        if (URL.isFileURL) {
+            NSLog(@"Reloading local file (%@)", URL);
+            AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:URL options:nil];
+            NSString *tracksKey = @"tracks";
+            [asset loadValuesAsynchronouslyForKeys:@[tracksKey] completionHandler:^{
+                NSError *error;
+                AVKeyValueStatus status = [asset statusOfValueForKey:tracksKey error:&error];
+                
+                if (status == AVKeyValueStatusLoaded) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithAsset:asset]];
+                    });
+                }
+                else {
+                    NSLog(@"The asset's tracks were not loaded:\n%@", [error localizedDescription]);
+                }
+            }];
+        } else {
+            [player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithURL:URL]];
+        }
     });
 }
 
 - (void)resume {
     if (player.currentItem
         && player.currentItem.playbackLikelyToKeepUp
-        && reachability.isReachable && (state == AVTPlayerStateConnecting || state == AVTPlayerStateReconnecting || state == AVTPlayerStateSeeking || state == AVTPlayerStatePlaying)
+        && (reachability.isReachable || URL.isFileURL)
+        && (state == AVTPlayerStateConnecting || state == AVTPlayerStateReconnecting || state == AVTPlayerStateSeeking || state == AVTPlayerStatePlaying)
         && !isInterrupted) {
         shouldResumeWhenReachable = NO;
         player.rate = 1.f;
@@ -383,8 +445,13 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
                 break;
             }
                 
+            case AVPlayerItemStatusUnknown: {
+                DBG(@"PlayerItem (Unknown)");
+                break;
+            }
+                
             case AVPlayerItemStatusFailed: {
-                DBG(@"PlayerItem (Failed): %@", player.currentItem.error.description);
+                DBG(@"PlayerItem (Failed): %@", player.currentItem.error.localizedDescription);
                 
                 if (retryCount++ < retryLimit) {
                     [self reloadPlayerItem];
@@ -428,7 +495,7 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     if (valueChangeKind == NSKeyValueChangeSetting && newValue) {
         DBG(@"PlayerItem buffer likely to keep up");
         
-        if (reachability.isReachable && (state == AVTPlayerStateConnecting || state == AVTPlayerStateReconnecting || state == AVTPlayerStateSeeking || state == AVTPlayerStatePlaying)) {
+        if ((reachability.isReachable || URL.isFileURL) && isPlaying && !isInterrupted) {
             NSLog(@"Will resume");
             [self resume];
             [self endBackgroundTask];
@@ -515,17 +582,47 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 - (void)setURL:(NSURL *)value {
     [self stop];
     
-    BOOL isSameHost = (URL && [URL.host isEqualToString:value.host]);
+    [reachability stopNotifier];
     
-    URL = value;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithURL:URL]];
-    });
+    if (!URL || value.isFileURL != URL.isFileURL) {
+        [self setupPlayer:nil];
+    }
     
-    if (!isSameHost) {
-        [self willChangeValueForKey:@"URL"];
-        [self setupReachability];
-        [self didChangeValueForKey:@"URL"];
+    if (value.isFileURL) {
+        URL = value;
+        
+        DBG(@"Playing local asset: %@", URL);
+        
+        AVURLAsset *asset = [AVURLAsset URLAssetWithURL:URL options:nil];
+        NSString *tracksKey = @"tracks";
+        [asset loadValuesAsynchronouslyForKeys:@[tracksKey] completionHandler:^{
+             NSError *error;
+             AVKeyValueStatus status = [asset statusOfValueForKey:tracksKey error:&error];
+             
+             if (status == AVKeyValueStatusLoaded) {
+                 dispatch_async(dispatch_get_main_queue(), ^{
+                     [self setupPlayer:[AVPlayerItem playerItemWithAsset:asset]];
+                 });
+             }
+             else {
+                 NSLog(@"The asset's tracks were not loaded:\n%@", [error localizedDescription]);
+             }
+         }];
+    } else {
+        BOOL isSameHost = (URL && [URL.host isEqualToString:value.host]);
+        
+        URL = value;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithURL:URL]];
+        });
+        
+        if (!isSameHost) {
+            [self willChangeValueForKey:@"URL"];
+            [self setupReachability];
+            [self didChangeValueForKey:@"URL"];
+        } else {
+            [reachability stopNotifier];
+        }
     }
 }
 
