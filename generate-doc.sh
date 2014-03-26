@@ -1,0 +1,1 @@
+appledoc --project-name AVToolkit --project-company "Danish Broadcasting Corporation" --company-id dk.dr --output ./Build/Docs ./AVToolkit/Classes

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="BTt-r7-fJD">
+    <dependencies>
+        <deployment defaultVersion="1536" identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3733"/>
+    </dependencies>
+    <scenes>
+        <!--Navigation Controller-->
+        <scene sceneID="oyZ-WP-qcY">
+            <objects>
+                <navigationController storyboardIdentifier="navigationController" definesPresentationContext="YES" id="BTt-r7-fJD" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="eMn-ki-n6H">
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="e0f-F2-a08" kind="relationship" relationship="rootViewController" id="jz3-yl-dT5"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="hVE-ny-Mbr" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="73" y="45"/>
+        </scene>
+        <!--Player View Controller - AVTPlayer Example-->
+        <scene sceneID="Vbe-6S-oqs">
+            <objects>
+                <viewController id="e0f-F2-a08" customClass="AVTPlayerViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="z4N-VU-o0N"/>
+                        <viewControllerLayoutGuide type="bottom" id="ade-by-2hg"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="4Sk-LW-IUc">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VOk-KZ-CY2">
+                                <rect key="frame" x="20" y="84" width="40" height="40"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="40" id="2wQ-do-T51"/>
+                                    <constraint firstAttribute="width" constant="40" id="8cH-mu-mKO"/>
+                                </constraints>
+                                <state key="normal" image="icon-play.png">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="togglePressed:" destination="e0f-F2-a08" eventType="touchUpInside" id="fun-7N-axj"/>
+                                </connections>
+                            </button>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Stopped" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uHP-eB-TWT">
+                                <rect key="frame" x="70" y="84" width="230" height="40"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="40" id="nBK-GT-Sma"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" editable="NO" selectable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gGD-NE-dCZ">
+                                <rect key="frame" x="20" y="252" width="280" height="296"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                <dataDetectorType key="dataDetectorTypes" link="YES"/>
+                            </textView>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="http://stream.to/me" minimumFontSize="17" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="tuP-rf-OiO">
+                                <rect key="frame" x="20" y="209" width="280" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" keyboardType="URL" keyboardAppearance="alert" returnKeyType="done" enablesReturnKeyAutomatically="YES"/>
+                                <connections>
+                                    <action selector="fieldValueChanged:" destination="e0f-F2-a08" eventType="editingDidEnd" id="BJK-Vp-3Jz"/>
+                                    <outlet property="delegate" destination="4Sk-LW-IUc" id="zY2-he-3Bz"/>
+                                </connections>
+                            </textField>
+                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="0.0" translatesAutoresizingMaskIntoConstraints="NO" id="4nR-y6-PbC">
+                                <rect key="frame" x="18" y="129" width="284" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </slider>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" momentary="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gWg-dm-oHz">
+                                <rect key="frame" x="20" y="174" width="280" height="29"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <segments>
+                                    <segment title="Live (HLS)"/>
+                                    <segment title="OD (HLS)"/>
+                                    <segment title="OD (MP4)"/>
+                                </segments>
+                                <connections>
+                                    <action selector="presetPressed:" destination="e0f-F2-a08" eventType="valueChanged" id="6uU-s5-MwU"/>
+                                </connections>
+                            </segmentedControl>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="gWg-dm-oHz" firstAttribute="leading" secondItem="4Sk-LW-IUc" secondAttribute="leading" constant="20" id="1zu-XM-3uu"/>
+                            <constraint firstItem="uHP-eB-TWT" firstAttribute="leading" secondItem="VOk-KZ-CY2" secondAttribute="trailing" constant="10" id="3Fs-oN-7Zy"/>
+                            <constraint firstAttribute="trailing" secondItem="uHP-eB-TWT" secondAttribute="trailing" constant="20" id="7Vx-1B-w2O"/>
+                            <constraint firstItem="uHP-eB-TWT" firstAttribute="leading" secondItem="VOk-KZ-CY2" secondAttribute="trailing" constant="10" id="9ly-ZW-ATx"/>
+                            <constraint firstAttribute="trailing" secondItem="gWg-dm-oHz" secondAttribute="trailing" constant="20" id="AFc-6c-fHz"/>
+                            <constraint firstItem="ade-by-2hg" firstAttribute="top" secondItem="gGD-NE-dCZ" secondAttribute="bottom" constant="20" id="Cku-42-ZDE"/>
+                            <constraint firstAttribute="trailing" secondItem="tuP-rf-OiO" secondAttribute="trailing" constant="20" id="JUV-SK-rqk"/>
+                            <constraint firstItem="gGD-NE-dCZ" firstAttribute="leading" secondItem="4Sk-LW-IUc" secondAttribute="leading" constant="20" id="Ugi-lJ-wv1"/>
+                            <constraint firstItem="gGD-NE-dCZ" firstAttribute="top" secondItem="tuP-rf-OiO" secondAttribute="bottom" constant="10" id="WJU-KR-afK"/>
+                            <constraint firstItem="4nR-y6-PbC" firstAttribute="leading" secondItem="4Sk-LW-IUc" secondAttribute="leading" constant="20" id="Wj9-4E-aUC"/>
+                            <constraint firstItem="tuP-rf-OiO" firstAttribute="leading" secondItem="4Sk-LW-IUc" secondAttribute="leading" constant="20" id="Xpk-uu-uOx"/>
+                            <constraint firstItem="gWg-dm-oHz" firstAttribute="top" secondItem="4nR-y6-PbC" secondAttribute="bottom" constant="15" id="aaz-28-qLP"/>
+                            <constraint firstItem="uHP-eB-TWT" firstAttribute="top" secondItem="z4N-VU-o0N" secondAttribute="bottom" constant="20" id="aiy-KN-PQn"/>
+                            <constraint firstAttribute="trailing" secondItem="gGD-NE-dCZ" secondAttribute="trailing" constant="20" id="jKS-wF-MqO"/>
+                            <constraint firstItem="4nR-y6-PbC" firstAttribute="top" secondItem="uHP-eB-TWT" secondAttribute="bottom" constant="5" id="mWl-jQ-chE"/>
+                            <constraint firstItem="tuP-rf-OiO" firstAttribute="top" secondItem="gWg-dm-oHz" secondAttribute="bottom" constant="10" id="muu-8C-Zg9"/>
+                            <constraint firstItem="VOk-KZ-CY2" firstAttribute="top" secondItem="z4N-VU-o0N" secondAttribute="bottom" constant="20" id="sSg-Wk-Rfk"/>
+                            <constraint firstAttribute="trailing" secondItem="4nR-y6-PbC" secondAttribute="trailing" constant="20" id="uvY-rt-LYH"/>
+                            <constraint firstItem="VOk-KZ-CY2" firstAttribute="leading" secondItem="4Sk-LW-IUc" secondAttribute="leading" constant="20" id="wdN-yn-UuW"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" title="AVTPlayer Example" id="eBS-l0-UQZ"/>
+                    <connections>
+                        <outlet property="positionSlider" destination="4nR-y6-PbC" id="s1N-k1-yAN"/>
+                        <outlet property="segmentedControl" destination="gWg-dm-oHz" id="tuT-fL-MMK"/>
+                        <outlet property="statusLabel" destination="uHP-eB-TWT" id="umQ-l5-Y6F"/>
+                        <outlet property="textField" destination="tuP-rf-OiO" id="nm5-r0-EVY"/>
+                        <outlet property="textView" destination="gGD-NE-dCZ" id="47P-J8-EOQ"/>
+                        <outlet property="toggleButton" destination="VOk-KZ-CY2" id="Ijx-ny-259"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="gkZ-qc-DPq" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="475" y="45"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="icon-play.png" width="25" height="25"/>
+    </resources>
+    <simulatedMetricsContainer key="defaultSimulatedMetrics">
+        <simulatedStatusBarMetrics key="statusBar"/>
+        <simulatedOrientationMetrics key="orientation"/>
+        <simulatedScreenMetrics key="destination" type="retina4"/>
+    </simulatedMetricsContainer>
+</document>

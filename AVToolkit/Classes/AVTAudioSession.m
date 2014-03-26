@@ -20,6 +20,18 @@
 #import <CoreTelephony/CTCallCenter.h>
 #import <CoreTelephony/CTCall.h>
 
+NSString *AVTAudioSessionRouteChanged           = @"AVTAudioSessionRouteChanged";
+NSString *AVTAudioSessionMediaServicesReset     = @"AVTAudioSessionMediaServicesReset";
+NSString *AVTAudioSessionMediaServicesLost      = @"AVTAudioSessionMediaServicesLost";
+
+NSString *AVTAudioSessionBeginInterruption      = @"AVTAudioSessionBeginInterruption";
+NSString *AVTAudioSessionEndInterruption        = @"AVTAudioSessionEndInterruption";
+
+NSString *AVTAudioSessionInputBecameAvailable   = @"AVTAudioSessionInputBecameAvailable";
+NSString *AVTAudioSessionInputBecameUnavailable = @"AVTAudioSessionInputBecameUnavailable";
+
+NSString *AVTAudioSessionShouldResume           = @"AVTAudioSessionShouldResume";
+
 #ifdef DEBUG
 #define DBG(fmt, ...) \
 NSLog((@"[DEBUG] %s (ln %d) " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
@@ -30,14 +42,9 @@ NSLog((@"[DEBUG] %s (ln %d) " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__
 #define ENUM_NUMBER(x) [NSNumber numberWithLong:(long)x]
 
 @interface AVTAudioSession() {
-    AVTAudioSessionInputRoute inputRoute, inputRoutePrevious;
-    AVTAudioSessionOutputRoute outputRoute, outputRoutePrevious;
-    AVTAudioSessionRouteChangeReason routeChangeReason;
-    
-    // Mute check
     AVTAudioSessionMuteCheck muteCheckCallback;
-    NSDate                  *muteCheckStarted;
-    SystemSoundID           muteSoundId;
+    NSDate                   *muteCheckStarted;
+    SystemSoundID            muteSoundId;
 }
 
 - (id)initAudioSession;
@@ -71,6 +78,7 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
 // ----
 
 @implementation AVTAudioSession
+@synthesize inputRoute, inputRoutePrevious, outputRoute, outputRoutePrevious, routeChangeReason;
 
 #pragma mark Initialization and destruction
 
@@ -113,7 +121,7 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
             DBG(@"Failed to initialize audio session: %@", error.description);
         }
         
-        routeChangeReason = AVTAudioSessionRouteChangeReasonUnknown;
+        //routeChangeReason = AVTAudioSessionRouteChangeReasonUnknown;
         outputRoute       = AVTAudioSessionOutputRouteNone;
         inputRoute        = AVTAudioSessionInputRouteNone;
         
