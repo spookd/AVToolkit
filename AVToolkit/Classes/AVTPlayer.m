@@ -567,7 +567,9 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     
     self.isSeeking     = YES;
     self.seekingToTime = CMTimeMakeWithSeconds(position, player.currentItem.asset.duration.timescale);
-    self.state         = AVTPlayerStateSeeking;
+    
+    if (!self.isStopped)
+        self.state = AVTPlayerStateSeeking;
     
     [player.currentItem seekToTime:self.seekingToTime toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
 }

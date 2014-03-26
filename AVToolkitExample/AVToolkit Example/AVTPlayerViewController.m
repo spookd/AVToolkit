@@ -212,9 +212,6 @@ extern void ensure_main_thread(void (^block)(void));
             if (AVTPlayer.defaultPlayer.state == AVTPlayerStatePlaying && !AVTPlayer.defaultPlayer.isLiveStream) {
                 [self startPositionTimer];
                 return [NSString stringWithFormat:@"Playing (%@)", [self stringFromInterval:positionSlider.value]];
-            } else {
-                positionSlider.value = 0.f;
-                positionSlider.maximumValue = 0.f;
             }
             return @"Playing";
         }
@@ -247,6 +244,8 @@ extern void ensure_main_thread(void (^block)(void));
             } else if ([keyPath isEqualToString:@"log"]) {
                 textView.text = [AVTPlayer.defaultPlayer.log componentsJoinedByString:@"\n\n"];
             } else if ([keyPath isEqualToString:@"URL"]) {
+                positionSlider.value = 0.f;
+                positionSlider.maximumValue = 0.f;
                 toggleButton.enabled = (AVTPlayer.defaultPlayer.URL != nil);
             }
         });

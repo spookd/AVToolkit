@@ -89,7 +89,6 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
  Start playback.
  */
 - (void)play;
-<<<<<<< HEAD
 /**
  Pause playback.
  */
@@ -109,9 +108,6 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
  Current playback rate.
  */
 @property(nonatomic, readwrite) float rate;
-=======
-- (void)stop;
->>>>>>> 5d4958c7928ec6742863c832910c0c68434f7b0c
 
 #pragma mark - Remote Control Handling (i.e. headsets)
 /** @name Remote Control Handling (i.e. headsets) */
