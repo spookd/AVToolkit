@@ -16,6 +16,13 @@
 
 #import <AVFoundation/AVFoundation.h>
 
+@class AVTPlayer;
+
+@protocol AVTPlayerAkamaiSupportDelegate <NSObject>
+- (void)player:(AVTPlayer *)player willReleasePlayer:(AVPlayer *)avPlayer;
+- (void)player:(AVTPlayer *)player didSetupPlayer:(AVPlayer *)avPlayer;
+@end
+
 /**
  Notification thrown when the item failed to load more than 10 times, while the host was reachable.
  */
@@ -98,6 +105,7 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
  
  @warning You cannot set the URL to be the same as the current one (call will return).
  @note Successfully setting this will stop any playback there might be.
+ @note KVO compliant.
  */
 @property(nonatomic, readwrite) NSURL *URL;
 /**
@@ -118,6 +126,12 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
  */
 - (void)remoteControlReceivedWithEvent:(UIEvent *)event;
 
+#pragma mark - Delegates
+/**
+ Mostly to support Akamai statistics. May be useful for other libraries, too.
+ */
+@property(nonatomic, weak) id<AVTPlayerAkamaiSupportDelegate> akamaiDelegate;
+
 #pragma mark - Player Properties
 /** @name Player Properties */
 /**
@@ -137,7 +151,7 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
 /**
  Used to determine whether the player is actively doing something (i.e. play/pause/stop buttons and such).
  */
-@property(nonatomic, readonly) BOOL isStopped;
+@property(nonatomic, readonly) BOOL isPlaying;
 /**
  Total duration of the current stream.
  

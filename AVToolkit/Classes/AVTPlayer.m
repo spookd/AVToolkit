@@ -35,18 +35,6 @@ NSString *AVTPlayerHostUnreachableNotification         = @"AVTPlayerHostUnreacha
         [self log:[NSString stringWithFormat:(@"%s (ln %d) " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__, nil]];
 #endif
 
-void ensure_main_thread(void (^block)(void)) {
-    if (![NSThread.currentThread isEqual:NSThread.mainThread]) {
-        dispatch_sync(dispatch_get_main_queue(), block);
-    } else {
-        block();
-    }
-}
-
-void main_queue_async(void (^block)(void)) {
-    dispatch_async(dispatch_get_main_queue(), block);
-}
-
 NSString *NSStringFromBool(BOOL what) {
     return (what) ? @"Yes" : @"No";
 }
@@ -59,7 +47,7 @@ NSString *NSStringFromBool(BOOL what) {
 @property(nonatomic, assign) NSInteger retryCount, retryLimit;
 @property(nonatomic, assign) UIBackgroundTaskIdentifier backgroundTask;
 @property(nonatomic, assign) AVTAudioSessionOutputRoute playbackOutputRoute;
-@property(nonatomic, assign) BOOL isActive, isReconnecting, isSeeking, shouldResumeWhenReady;
+@property(nonatomic, assign) BOOL isActive, isReconnecting, isSeeking, shouldResumeWhenReady, shouldRecoverWhenReachable;
 
 - (void)log:(NSString *)message;
 
@@ -76,7 +64,7 @@ NSString *NSStringFromBool(BOOL what) {
 
 
 @implementation AVTPlayer
-@synthesize backgroundTask, isActive, isReconnecting, isSeeking, logs, playbackOutputRoute, player, playerLayer, URL, reachability, retryCount, retryLimit, retryPosition, shouldPauseInBackground, shouldPauseWhenRouteChanges, shouldResumeWhenReady, state;
+@synthesize akamaiDelegate, backgroundTask, isActive, isReconnecting, isSeeking, logs, playbackOutputRoute, player, playerLayer, URL, reachability, retryCount, retryLimit, retryPosition, shouldPauseInBackground, shouldPauseWhenRouteChanges, shouldRecoverWhenReachable, shouldResumeWhenReady, state;
 
 #pragma mark - Const: KVO observation options
 
@@ -112,8 +100,6 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         [AVTAudioSession.sharedInstance activate:^(BOOL activated, NSError *error) {
             if (error) {
                 NSLog(@"!! Failed to activate audio session: %@", error.localizedDescription);
-            } else {
-                NSLog(@"Audio session activated? %@", (activated) ? @"Yes" : @"No");
             }
         }];
     }
@@ -129,13 +115,14 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         self.isActive       = NO;
         self.isSeeking      = NO;
         self.isReconnecting = NO;
+        self.state          = AVTPlayerStateStopped;
         
         self.shouldPauseWhenRouteChanges = YES;
         self.shouldPauseInBackground     = NO;
         self.shouldResumeWhenReady       = NO;
+        self.shouldRecoverWhenReachable  = NO;
         
         playerLayer = [[AVPlayerLayer alloc] init];
-        state       = AVTPlayerStateStopped;
         logs        = NSMutableArray.array;
         
         [NSNotificationCenter.defaultCenter addObserver:self
@@ -169,11 +156,20 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     return self;
 }
 
+- (void)dealloc {
+    [NSNotificationCenter.defaultCenter removeObserver:self];
+    [self stopWithEndReached:YES settingState:AVTPlayerStateStopped];
+    [self teardownPlayer];
+}
+
 #pragma mark - UIApplication background handling
 
 - (void)applicationDidEnterBackground {
-    if (state == AVTPlayerStateConnecting || state == AVTPlayerStateReconnecting || state == AVTPlayerStateSeeking)
+    if (self.shouldPauseInBackground && self.isPlaying) {
+        [self pause];
+    } else if (state == AVTPlayerStateConnecting || state == AVTPlayerStateReconnecting || state == AVTPlayerStateSeeking) {
         [self startBackgroundTask];
+    }
 }
 
 - (void)applicationDidBecomeActive {
@@ -198,16 +194,17 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     
     DBG(@"Setting up player");
     
-    ensure_main_thread(^{
-        [self willChangeValueForKey:@"player"]; {
-            player = [[AVPlayer alloc] init];
-            playerLayer.player = player;
-            
-            [player addObserver:self forKeyPath:@"currentItem" options:observationOptions context:&AVPlayerItemChangedContext];
-            [player addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerStatusContext];
-            [player addObserver:self forKeyPath:@"rate" options:observationOptions context:&AVPlayerRateContext];
-        } [self didChangeValueForKey:@"player"];
-    });
+    [self willChangeValueForKey:@"player"]; {
+        player = [[AVPlayer alloc] init];
+        playerLayer.player = player;
+        
+        if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:didSetupPlayer:)]) {
+            [self.akamaiDelegate player:self didSetupPlayer:player];
+        }
+        [player addObserver:self forKeyPath:@"currentItem" options:observationOptions context:&AVPlayerItemChangedContext];
+        [player addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerStatusContext];
+        [player addObserver:self forKeyPath:@"rate" options:observationOptions context:&AVPlayerRateContext];
+    } [self didChangeValueForKey:@"player"];
 }
 
 - (void)teardownPlayer {
@@ -231,6 +228,9 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         [player removeObserver:self forKeyPath:@"status" context:&AVPlayerStatusContext];
         [player removeObserver:self forKeyPath:@"rate" context:&AVPlayerRateContext];
         
+        if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:willReleasePlayer:)]) {
+            [self.akamaiDelegate player:self willReleasePlayer:player];
+        }
         
         player = nil;
     } [self didChangeValueForKey:@"player"];
@@ -247,6 +247,10 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
             backgroundTask = [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler:^{
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if (backgroundTask != UIBackgroundTaskInvalid) {
+                        // Really, if this one got triggered, we're out of luck.
+                        // The app will have to be opened (or rmeote controls triggered) in order for us to regain background control ...
+                        // Maybe stop playback, throw a "failed to restart" notification? Don't know.
+                        
                         DBG(@"Background task killed by the system");
                         [[UIApplication sharedApplication] endBackgroundTask:backgroundTask];
                         backgroundTask = UIBackgroundTaskInvalid;
@@ -282,7 +286,25 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         DBG(@"Tried to resume playback when there isn't a valid player (%@) or item (%@)", player, player.currentItem);
     }
     
-    self.shouldResumeWhenReady = NO;
+    if (!URL.isFileURL && !reachability.isReachable) {
+        DBG(@"Not a local file and host isn't reachable -- unable to resume");
+    }
+    
+    if (player.currentItem.status == AVPlayerItemStatusFailed) {
+        [self reloadPlayerItem];
+        return;
+    }
+    
+    if (!player.currentItem.playbackLikelyToKeepUp)
+        return;
+    
+    if (retryPosition != 0) {
+        self.position = retryPosition;
+        retryPosition = 0.f;
+        return;
+    }
+    
+    [self endBackgroundTask];
     
     if (URL.isFileURL && player.currentItem.playbackLikelyToKeepUp) {
         self.state  = AVTPlayerStatePlaying;
@@ -291,7 +313,7 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
             player.rate = 1.f;
         
         retryCount  = 0;
-    } else if (!URL.isFileURL && reachability.isReachable && player.currentItem.playbackLikelyToKeepUp && (self.state == AVTPlayerStateConnecting || self.state == AVTPlayerStateReconnecting || self.state == AVTPlayerStateSeeking)) {
+    } else if (!URL.isFileURL && player.currentItem.playbackLikelyToKeepUp && (self.state == AVTPlayerStateConnecting || self.state == AVTPlayerStateReconnecting || self.state == AVTPlayerStateSeeking)) {
         self.state  = AVTPlayerStatePlaying;
         
         if (player.rate == 0.f)
@@ -300,16 +322,6 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         retryCount  = 0;
     } else {
         self.shouldResumeWhenReady = YES;
-        
-        DBG(@"Not starting playback:\n"
-            "-- URL.isFileURL: %@\n"
-            "-- player.currentItem.playbackLikelyToKeepUp: %@\n"
-            "-- reachability.isReachable: %@\n"
-            "-- self.state(...): %@\n",
-            NSStringFromBool(URL.isFileURL),
-            NSStringFromBool(player.currentItem.playbackLikelyToKeepUp),
-            NSStringFromBool(reachability.isReachable),
-            NSStringFromBool(self.state == AVTPlayerStateConnecting || self.state == AVTPlayerStateReconnecting || self.state == AVTPlayerStateSeeking));
     }
 }
 
@@ -354,7 +366,7 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         }
             
         case UIEventSubtypeRemoteControlTogglePlayPause: {
-            if (self.isStopped) {
+            if (!self.isPlaying) {
                 [self play];
             } else {
                 [self pause];
@@ -463,7 +475,10 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
                 DBG(@"PlayerItem (Failed): %@", player.currentItem.error.localizedDescription);
                 
                 if (retryCount++ < retryLimit) {
-                    [self reloadPlayerItem];
+                    if (URL.isFileURL || reachability.isReachable)
+                        [self reloadPlayerItem];
+                    else
+                        self.shouldRecoverWhenReachable = YES;
                 } else {
                     DBG(@"PlayerItem failed %ld times now -- giving up", (long)retryLimit);
                     [self pause];
@@ -483,8 +498,10 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     if (change[NSKeyValueChangeNewKey] && [change[NSKeyValueChangeNewKey] boolValue]) {
         DBG(@"PlayerItem buffer empty");
         
-        if (self.isStopped) {
+        if (!self.isPlaying) {
             isReconnecting = YES;
+        } else if (!URL.isFileURL && !self.isLiveStream && !reachability.isReachable) {
+            shouldRecoverWhenReachable = YES;
         } else {
             self.state = (isSeeking) ? AVTPlayerStateSeeking : AVTPlayerStateReconnecting;
         }
@@ -504,9 +521,23 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         
         isSeeking = NO;
         
-        if ((reachability.isReachable || URL.isFileURL) && !self.isStopped) {
-            NSLog(@"-- Will resume (%ld)", (long)state);
+        if ((reachability.isReachable || URL.isFileURL) && self.isPlaying) {
+            DBG(@"-- Will resume");
             [self resume];
+            
+            if (retryPosition == 0.f)
+                return;
+            
+            // Sometimes, during prolonged disconnectivity, the player wont start playing even though the rate is set to 1.f (and it's buffering)
+            // Let's do a check after 1s and re-set the rate if it hasn't started ...
+            NSTimeInterval lastPosition = self.position;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                if (lastPosition == self.position && self.isPlaying) {
+                    DBG(@"Re-set the position as it didn't start correctly");
+                    player.rate = 0.f;
+                    player.rate = 1.f;
+                }
+            });
         }
         
         [self endBackgroundTask];
@@ -518,35 +549,29 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 #pragma mark - Notifications: Audio session
 
 - (void)beginInterruption:(NSNotification *)notification {
-    ensure_main_thread(^{
-        if (!self.isStopped) {
-            DBG(@"Interrupted -- pausing");
-            [self stopWithEndReached:NO settingState:AVTPlayerStateInterrupted];
-        }
-    });
+    if (self.isPlaying) {
+        DBG(@"Interrupted -- pausing");
+        [self stopWithEndReached:NO settingState:AVTPlayerStateInterrupted];
+    }
 }
 
 - (void)endInterruption:(NSNotification *)notification {
-    ensure_main_thread(^{
-        if (self.state == AVTPlayerStateInterrupted) {
-            DBG(@"Interruption ended -- resuming");
-            [self play];
-        }
-    });
+    if (self.state == AVTPlayerStateInterrupted) {
+        DBG(@"Interruption ended -- resuming");
+        [self play];
+    }
 }
 
 - (void)audioRouteChanged:(NSNotification *)notification {
-    ensure_main_thread(^{
-        if (AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteHeadphones
-            && AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteBluetoothHandsfree
-            && AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteAirPlay
-            && AVTAudioSession.sharedInstance.outputRoute != self.playbackOutputRoute) {
-            if (!self.isStopped && self.shouldPauseWhenRouteChanges) {
-                DBG(@"Audio route changed -- pausing");
-                [self pause];
-            }
+    if (AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteHeadphones
+        && AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteBluetoothHandsfree
+        && AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteAirPlay
+        && AVTAudioSession.sharedInstance.outputRoute != self.playbackOutputRoute) {
+        if (self.isPlaying && self.shouldPauseWhenRouteChanges) {
+            DBG(@"Audio route changed -- pausing");
+            [self pause];
         }
-    });
+    }
 }
 
 #pragma mark - Notification: Player item
@@ -568,7 +593,7 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     self.isSeeking     = YES;
     self.seekingToTime = CMTimeMakeWithSeconds(position, player.currentItem.asset.duration.timescale);
     
-    if (!self.isStopped)
+    if (self.isPlaying)
         self.state = AVTPlayerStateSeeking;
     
     [player.currentItem seekToTime:self.seekingToTime toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
@@ -601,22 +626,19 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 }
 
 - (void)setURL:(NSURL *)value {
-    if (URL && [URL isEqual:value]) {
-        DBG(@"Tried to set the same URL already set (%@) -- returning", URL.absoluteString);
-        return;
-    }
+    retryPosition = 0.f;
     
     AVPlayerItem *item;
     BOOL isSameHost = (reachability && URL && [URL.host isEqualToString:value.host]);
-    
-    [self willChangeValueForKey:@"URL"];
-    URL = value;
-    [self didChangeValueForKey:@"URL"];
     
     [self stopWithEndReached:YES settingState:AVTPlayerStateStopped];
     
     [self teardownPlayer];
     [self setupPlayer];
+    
+    [self willChangeValueForKey:@"URL"];
+    URL = value;
+    [self didChangeValueForKey:@"URL"];
     
     if (value.isFileURL) {
         // We don't need reachability here
@@ -626,8 +648,6 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         }
         
         item = [AVPlayerItem playerItemWithAsset:[AVAsset assetWithURL:URL]];
-        
-        return;
     } else {
         item = [AVPlayerItem playerItemWithURL:URL];
     }
@@ -644,8 +664,16 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         
         reachability.reachableBlock = ^(Reachability *reach) {
             typeof(weakSelf) __strong strongSelf = weakSelf;
-            if (strongSelf->shouldResumeWhenReady)
+            if (strongSelf->shouldResumeWhenReady) {
+                strongSelf->shouldResumeWhenReady = NO;
                 [strongSelf resume];
+            }
+            
+            if (strongSelf->shouldRecoverWhenReachable) {
+                strongSelf->shouldRecoverWhenReachable = NO;
+                [strongSelf stopWithEndReached:NO settingState:strongSelf.state];
+                [strongSelf reloadPlayerItem];
+            }
             
             [NSNotificationCenter.defaultCenter postNotificationName:AVTPlayerHostReachableNotification object:strongSelf];
         };
@@ -675,8 +703,8 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     [self didChangeValueForKey:@"state"];
 }
 
-- (BOOL)isStopped {
-    return state == AVTPlayerStateStopped || state == AVTPlayerStatePaused || state == AVTPlayerStateInterrupted;
+- (BOOL)isPlaying {
+    return !(state == AVTPlayerStateStopped || state == AVTPlayerStatePaused || state == AVTPlayerStateInterrupted);
 }
 
 #pragma mark - Properties: Readonly

@@ -11,7 +11,13 @@
 #import <AVToolkit/AVToolkit.h>
 #import <QuartzCore/QuartzCore.h>
 
-extern void ensure_main_thread(void (^block)(void));
+void ensure_main_thread(void (^block)(void)) {
+    if (![NSThread.currentThread isEqual:NSThread.mainThread]) {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    } else {
+        block();
+    }
+}
 
 @implementation UIButton (AVTPlayerExample)
 
@@ -27,7 +33,7 @@ extern void ensure_main_thread(void (^block)(void));
 
 @interface AVTPlayerViewController() <UITextFieldDelegate, UIAlertViewDelegate> {
     UIImage *playImage, *stopImage;
-    NSTimer *positionTimer;
+    NSTimer *positionTimer, *fooTimer;
     UIAlertView *failedToPlayAlert;
 }
 @end
@@ -47,6 +53,9 @@ extern void ensure_main_thread(void (^block)(void));
         [AVTPlayer.defaultPlayer addObserver:self forKeyPath:@"URL" options:NSKeyValueObservingOptionNew context:nil];
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(failedToPlayNotification:) name:AVTPlayerFailedToPlayNotification object:nil];
+        
+        fooTimer = [NSTimer timerWithTimeInterval:1.0f target:self selector:@selector(debugIt) userInfo:nil repeats:YES];
+        [NSRunLoop.currentRunLoop addTimer:fooTimer forMode:NSDefaultRunLoopMode];
     }
     
     return self;
@@ -58,6 +67,15 @@ extern void ensure_main_thread(void (^block)(void));
     [AVTPlayer.defaultPlayer removeObserver:self forKeyPath:@"state"];
     [AVTPlayer.defaultPlayer removeObserver:self forKeyPath:@"log"];
     [AVTPlayer.defaultPlayer removeObserver:self forKeyPath:@"URL"];
+}
+
+- (void)debugIt {
+    /*
+    NSLog(@"Total duration:    %f", AVTPlayer.defaultPlayer.duration);
+    NSLog(@"Buffered duration: %f", AVTPlayer.defaultPlayer.bufferedDuration);
+    NSLog(@"Position:          %f", AVTPlayer.defaultPlayer.position);
+    NSLog(@"Rate:              %f", AVTPlayer.defaultPlayer.rate);
+     */
 }
 
 - (void)viewDidLoad {
@@ -137,7 +155,7 @@ extern void ensure_main_thread(void (^block)(void));
 }
 
 - (IBAction)togglePressed:(id)sender {
-    if (AVTPlayer.defaultPlayer.isStopped)
+    if (!AVTPlayer.defaultPlayer.isPlaying)
         [AVTPlayer.defaultPlayer play];
     else
         [AVTPlayer.defaultPlayer pause];
@@ -186,11 +204,8 @@ extern void ensure_main_thread(void (^block)(void));
     if (AVTPlayer.defaultPlayer.state != AVTPlayerStatePlaying || AVTPlayer.defaultPlayer.isLiveStream)
         return;
     
-    positionSlider.minimumValue = 0.f;
-    positionSlider.maximumValue = (isnan(AVTPlayer.defaultPlayer.duration)) ? 0.f : AVTPlayer.defaultPlayer.duration;
-    positionSlider.value        = AVTPlayer.defaultPlayer.position;
-    
-    statusLabel.text = [NSString stringWithFormat:@"Playing (%@)", [self stringFromInterval:positionSlider.value]];
+    positionSlider.value = AVTPlayer.defaultPlayer.position;
+    statusLabel.text     = [NSString stringWithFormat:@"Playing (%@)", [self stringFromInterval:positionSlider.value]];
 }
 
 #pragma mark - Observation
@@ -210,6 +225,9 @@ extern void ensure_main_thread(void (^block)(void));
             
         case AVTPlayerStatePlaying: {
             if (AVTPlayer.defaultPlayer.state == AVTPlayerStatePlaying && !AVTPlayer.defaultPlayer.isLiveStream) {
+                positionSlider.minimumValue = 0.f;
+                positionSlider.maximumValue = (isnan(AVTPlayer.defaultPlayer.duration)) ? 0.f : AVTPlayer.defaultPlayer.duration;
+                
                 [self startPositionTimer];
                 return [NSString stringWithFormat:@"Playing (%@)", [self stringFromInterval:positionSlider.value]];
             }
@@ -236,7 +254,7 @@ extern void ensure_main_thread(void (^block)(void));
             if ([keyPath isEqualToString:@"state"]) {
                 statusLabel.text = [self stateFromPlayer];
                 
-                if (AVTPlayer.defaultPlayer.isStopped) {
+                if (!AVTPlayer.defaultPlayer.isPlaying) {
                     [toggleButton setImage:playImage forState:UIControlStateNormal];
                 } else {
                     [toggleButton setImage:stopImage forState:UIControlStateNormal];
