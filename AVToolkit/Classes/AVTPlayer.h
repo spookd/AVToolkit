@@ -107,7 +107,7 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
  @note Successfully setting this will stop any playback there might be.
  @note KVO compliant.
  */
-@property(nonatomic, readwrite) NSURL *URL;
+@property(nonatomic, strong) NSURL *URL;
 /**
  Current playback position.
  */

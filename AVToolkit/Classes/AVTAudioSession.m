@@ -39,13 +39,11 @@ NSLog((@"[DEBUG] %s (ln %d) " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__
 #define DBG(fmt, ...)
 #endif
 
-#define ENUM_NUMBER(x) [NSNumber numberWithLong:(long)x]
+@interface AVTAudioSession(){}
 
-@interface AVTAudioSession() {
-    AVTAudioSessionMuteCheck muteCheckCallback;
-    NSDate                   *muteCheckStarted;
-    SystemSoundID            muteSoundId;
-}
+@property (strong,nonatomic) AVTAudioSessionMuteCheck muteCheckCallback;
+@property (strong,nonatomic) NSDate *muteCheckStarted;
+@property (readwrite,nonatomic) SystemSoundID muteSoundId;
 
 - (id)initAudioSession;
 
@@ -54,6 +52,8 @@ NSLog((@"[DEBUG] %s (ln %d) " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__
 - (void)muteSwitchCheckCompleted;
 - (void)refreshAudioRoutes;
 @end
+
+
 
 void AVTAudioSessionMuteCheckCompleted(SystemSoundID ssId, void* clientData) {
     AVTAudioSession *audioSession = (__bridge AVTAudioSession *)clientData;
@@ -86,6 +86,10 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
     static dispatch_once_t once;
     static id instance;
     
+    if (instance) {
+        return instance;
+    }
+    
     dispatch_once(&once, ^{
         instance = [[AVTAudioSession alloc] initAudioSession];
     });
@@ -95,7 +99,6 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
 
 - (id)init {
     self = nil;
-    
     @throw [NSException exceptionWithName:NSInternalInconsistencyException
                                    reason:@"Do not initialize this class - use the static method sharedInstance instead"
                                  userInfo:nil];
@@ -105,6 +108,7 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
 - (id)initAudioSession {
     if (self = [super init]) {
         NSError *error;
+        
         [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:&error];
         
         if (error) {
@@ -121,6 +125,7 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
             DBG(@"Failed to initialize audio session: %@", error.description);
         }
         
+    
         //routeChangeReason = AVTAudioSessionRouteChangeReasonUnknown;
         outputRoute       = AVTAudioSessionOutputRouteNone;
         inputRoute        = AVTAudioSessionInputRouteNone;
@@ -130,6 +135,7 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
     
     return self;
 }
+
 
 - (void)dealloc {
     [NSNotificationCenter.defaultCenter removeObserver:self];
@@ -144,19 +150,15 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
 #pragma mark Notification helpers
 
 - (void)postInterruptionBegan {
-    dispatch_async(dispatch_get_main_queue(), ^{
         [NSNotificationCenter.defaultCenter postNotificationName:AVTAudioSessionBeginInterruption
                                                           object:self
                                                         userInfo:nil];
-    });
 }
 
 - (void)postInterruptionEnded:(BOOL)resume {
-    dispatch_async(dispatch_get_main_queue(), ^{
         [NSNotificationCenter.defaultCenter postNotificationName:AVTAudioSessionEndInterruption
                                                           object:self
                                                         userInfo:@{AVTAudioSessionShouldResume: [NSNumber numberWithBool:resume]}];
-    });
 }
 
 #pragma mark Notifications: AVAudioSession
@@ -208,6 +210,7 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
 
 #pragma mark Session activation/deactivation
 
+
 - (void)activate:(AVTAudioSessionToggleActivation)completed {
     NSError *error = nil;
     BOOL success   = ([AVAudioSession.sharedInstance setActive:YES error:&error] == YES);
@@ -220,7 +223,9 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
         DBG(@"Activation failed: %@", error.description);
     }
     
-    completed(success, error);
+    if (completed) {
+        completed(success, error);
+    }
 }
 
 - (void)deactivate:(AVTAudioSessionToggleActivation)completed {
@@ -235,16 +240,18 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
         DBG(@"Deactivation failed: %@", error.description);
     }
     
-    completed(success, error);
+    if (completed) {
+        completed(success, error);
+    }
 }
 
 #pragma mark Mute check (inspired by Moshe Gottlieb) -- experimental
 
 - (void)muteSwitchActivated:(AVTAudioSessionMuteCheck)completed {
-    if (!completed || muteCheckStarted)
+    if (!completed || self.muteCheckStarted)
         return;
     
-    NSURL *muteSoundFile = nil;
+    NSURL *muteSoundFile;
     NSString *bundlePath = [NSBundle.mainBundle pathForResource:@"AVToolkitResources" ofType:@"bundle"];
     
     if (bundlePath) {
@@ -253,37 +260,40 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
         DBG(@"AVToolkitResources.bundle not found -- did you forget to include it?");
     }
     
-    if (AudioServicesCreateSystemSoundID((__bridge CFURLRef)muteSoundFile, &muteSoundId) == kAudioServicesNoError) {
-        muteCheckCallback = completed;
-        UInt32 yes        = 1;
+    if (AudioServicesCreateSystemSoundID((__bridge CFURLRef)muteSoundFile, &_muteSoundId) == kAudioServicesNoError) {
+        self.muteCheckCallback = completed;
+        UInt32 yes = 1;
         
-        AudioServicesAddSystemSoundCompletion(muteSoundId,
+        AudioServicesAddSystemSoundCompletion(self.muteSoundId,
                                               CFRunLoopGetMain(),
                                               kCFRunLoopDefaultMode,
                                               AVTAudioSessionMuteCheckCompleted,
                                               (__bridge void *)self);
         
-        AudioServicesSetProperty(kAudioServicesPropertyIsUISound, sizeof(muteSoundId), &muteSoundId, sizeof(yes), &yes);
-        muteCheckStarted = NSDate.date;
-        AudioServicesPlaySystemSound(muteSoundId);
+        AudioServicesSetProperty(kAudioServicesPropertyIsUISound, sizeof(_muteSoundId), &_muteSoundId, sizeof(yes), &yes);
+        self.muteCheckStarted = [NSDate date];
+        AudioServicesPlaySystemSound(self.muteSoundId);
     } else {
         DBG(@"Failed to create system sound -- reporting mute switch activated");
-        completed(YES); // I know, I know ...
+        completed(YES); //As we don't realy know if the mute button is on, we return success
     }
+    
 }
 
 - (void)muteSwitchCheckCompleted {
-    AudioServicesRemoveSystemSoundCompletion(muteSoundId);
-    AudioServicesDisposeSystemSoundID(muteSoundId);
+    AudioServicesRemoveSystemSoundCompletion(self.muteSoundId);
+    AudioServicesDisposeSystemSoundID(self.muteSoundId);
     
-    if (muteCheckStarted && muteCheckCallback) {
-        NSTimeInterval interval = [NSDate.date timeIntervalSinceDate:muteCheckStarted];
+    if (self.muteCheckStarted && self.muteCheckCallback) {
+        NSTimeInterval interval = [NSDate.date timeIntervalSinceDate:self.muteCheckStarted];
         DBG(@"Interval: %f", interval);
-        muteCheckCallback((interval < .1f));
+        if (self.muteCheckCallback){
+            self.muteCheckCallback((interval < .1f));
+        }
     }
     
-    muteCheckStarted  = nil;
-    muteCheckCallback = nil;
+    self.muteCheckStarted  = nil;
+    self.muteCheckCallback = nil;
 }
 
 #pragma mark Audio route
@@ -359,7 +369,7 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
             }
         }
     } else {
-        DBG(@"Dictionary invalid (size reported: %u)", dictSize);
+        DBG(@"Dictionary invalid (size reported: %u)", (unsigned int)dictSize);
     }
 #endif
     
@@ -367,11 +377,11 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
         [NSNotificationCenter.defaultCenter postNotificationName:AVTAudioSessionRouteChanged
                                                           object:self
                                                         userInfo:@{
-                                                                   @"InputRoute":          ENUM_NUMBER(inputRoute),
-                                                                   @"InputRoutePrevious":  ENUM_NUMBER(inputRoutePrevious),
-                                                                   @"OutputRoute":         ENUM_NUMBER(outputRoute),
-                                                                   @"OutputRoutePrevious": ENUM_NUMBER(outputRoutePrevious),
-                                                                   @"Reason":              ENUM_NUMBER(routeChangeReason)
+                                                                   @"InputRoute":          @(inputRoute),
+                                                                   @"InputRoutePrevious":  @(inputRoutePrevious),
+                                                                   @"OutputRoute":         @(outputRoute),
+                                                                   @"OutputRoutePrevious": @(outputRoutePrevious),
+                                                                   @"Reason":              @(routeChangeReason)
                                                                    }];
         
         DBG(@"Audio route changed:")
@@ -380,27 +390,6 @@ void AVTAudioSessionRouteChangedCallback(void *userData, AudioSessionPropertyID 
     }
 }
 
-#pragma mark Getters
-
-- (AVTAudioSessionInputRoute)inputRoute {
-    return inputRoute;
-}
-
-- (AVTAudioSessionInputRoute)inputRoutePrevious {
-    return inputRoutePrevious;
-}
-
-- (AVTAudioSessionOutputRoute)outputRoute {
-    return outputRoute;
-}
-
-- (AVTAudioSessionOutputRoute)outputRoutePrevious {
-    return outputRoutePrevious;
-}
-
-- (AVTAudioSessionRouteChangeReason)routeChangeReason {
-    return routeChangeReason;
-}
 
 - (BOOL)hasActiveCall {
     CTCallCenter *callCenter = [[CTCallCenter alloc] init];

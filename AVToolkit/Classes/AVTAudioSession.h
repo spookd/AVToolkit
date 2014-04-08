@@ -30,6 +30,7 @@ extern NSString *AVTAudioSessionShouldResume;
 /**
  Constants that represent the output route of the session
  */
+
 typedef NS_ENUM(NSUInteger, AVTAudioSessionOutputRoute) {
     /** Currently in the simulator, or the session wasn't initialized properly. */
     AVTAudioSessionOutputRouteNone,
@@ -96,6 +97,8 @@ typedef void (^AVTAudioSessionToggleActivation)(BOOL activated, NSError *error);
 
 @interface AVTAudioSession : NSObject
 + (instancetype)sharedInstance;
+
+-(id)init __deprecated_msg("use sharedInstance to get an initialized instance of this class");
 
 - (void)activate:(AVTAudioSessionToggleActivation)completed;
 - (void)deactivate:(AVTAudioSessionToggleActivation)completed;
