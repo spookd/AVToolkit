@@ -15,4 +15,5 @@
 @property(nonatomic, strong) IBOutlet UITextField *textField;
 @property(nonatomic, strong) IBOutlet UISlider *positionSlider;
 @property(nonatomic, strong) IBOutlet UISegmentedControl *segmentedControl;
+@property (weak, nonatomic) IBOutlet UISwitch *subtitleSwitch;
 @end
