@@ -51,7 +51,8 @@ void ensure_main_thread(void (^block)(void)) {
         [AVTPlayer.defaultPlayer addObserver:self forKeyPath:@"state" options:NSKeyValueObservingOptionNew context:nil];
         [AVTPlayer.defaultPlayer addObserver:self forKeyPath:@"log" options:NSKeyValueObservingOptionNew context:nil];
         [AVTPlayer.defaultPlayer addObserver:self forKeyPath:@"URL" options:NSKeyValueObservingOptionNew context:nil];
-        
+        [AVTPlayer.defaultPlayer addObserver:self forKeyPath:@"availableSubtitles" options:NSKeyValueObservingOptionNew context:nil];
+       
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(failedToPlayNotification:) name:AVTPlayerFailedToPlayNotification object:nil];
         
         fooTimer = [NSTimer timerWithTimeInterval:1.0f target:self selector:@selector(debugIt) userInfo:nil repeats:YES];
@@ -152,6 +153,10 @@ void ensure_main_thread(void (^block)(void)) {
                                          cancelButtonTitle:nil
                                          otherButtonTitles:@"OK", nil];
     [failedToPlayAlert show];
+}
+- (IBAction)tottleSubtitles:(UISwitch *)sender {
+    AVTPlayer *player = [AVTPlayer defaultPlayer];
+        [player changeSubtitlesTo:sender.isOn?player.availableSubtitles.firstObject:nil];
 }
 
 - (IBAction)togglePressed:(id)sender {
@@ -265,6 +270,8 @@ void ensure_main_thread(void (^block)(void)) {
                 positionSlider.value = 0.f;
                 positionSlider.maximumValue = 0.f;
                 toggleButton.enabled = (AVTPlayer.defaultPlayer.URL != nil);
+            } else if ([keyPath isEqualToString:@"availableSubtitles"]){
+                self.subtitleSwitch.enabled = AVTPlayer.defaultPlayer.availableSubtitles.count > 0;
             }
         });
     }
