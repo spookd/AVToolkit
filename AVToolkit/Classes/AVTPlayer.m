@@ -322,15 +322,22 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     if (self.URL.isFileURL && self.player.currentItem.playbackLikelyToKeepUp) {
         self.state  = AVTPlayerStatePlaying;
         
-        if (self.player.rate == 0.f)
+        if (self.player.rate == 0.f){
+            [[AVTAudioSession sharedInstance] deactivate:nil];
             self.player.rate = 1.f;
+            [[AVTAudioSession sharedInstance] activate:nil];
+        }
         
         self.retryCount  = 0;
     } else if (!self.URL.isFileURL && self.player.currentItem.playbackLikelyToKeepUp && (self.state == AVTPlayerStateConnecting || self.state == AVTPlayerStateReconnecting || self.state == AVTPlayerStateSeeking)) {
         self.state  = AVTPlayerStatePlaying;
         
-        if (self.player.rate == 0.f)
+        if (self.player.rate == 0.f){
+            [[AVTAudioSession sharedInstance] deactivate:nil];
             self.player.rate = 1.f;
+            [[AVTAudioSession sharedInstance] activate:nil];
+        }
+        
         
         self.retryCount  = 0;
     } else {
@@ -445,8 +452,9 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     float newRate = [change[NSKeyValueChangeNewKey] floatValue];
     float oldRate = [change[NSKeyValueChangeOldKey] floatValue];
     
-    if (oldRate == newRate)
+    if (oldRate == newRate){
         return;
+    }
     
     DBG(@"Player rate changed from '%f' to '%f'", oldRate, newRate);
 }
@@ -573,7 +581,9 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
                 if (lastPosition == self.position && self.isPlaying) {
                     DBG(@"Re-set the position as it didn't start correctly");
                     self.player.rate = 0.f;
+                    [[AVTAudioSession sharedInstance] deactivate:nil];
                     self.player.rate = 1.f;
+                    [[AVTAudioSession sharedInstance] activate:nil];
                 }
             });
         }
@@ -655,8 +665,10 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         DBG(@"Tried to set rate to %f on a live stream -- you can't do that!", rate);
         return;
     }
-    
+
+    [[AVTAudioSession sharedInstance] deactivate:nil];
     self.player.rate = rate;
+    [[AVTAudioSession sharedInstance] activate:nil];
 }
 
 - (float)rate {
