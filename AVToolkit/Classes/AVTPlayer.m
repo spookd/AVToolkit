@@ -17,7 +17,6 @@
 #import "AVTPlayer.h"
 
 #import "Reachability.h"
-#import "AVTAudioSession.h"
 
 #import <MediaPlayer/MediaPlayer.h>
 
@@ -47,8 +46,7 @@ NSString *NSStringFromBool(BOOL what) {
 @property(nonatomic, assign) CMTime seekingToTime;
 @property(nonatomic, assign) NSInteger retryCount, retryLimit;
 @property(nonatomic, assign) UIBackgroundTaskIdentifier backgroundTask;
-@property(nonatomic, assign) AVTAudioSessionOutputRoute playbackOutputRoute;
-@property(nonatomic, assign) BOOL isActive, isReconnecting, isSeeking, shouldResumeWhenReady, shouldRecoverWhenReachable;
+@property(nonatomic, assign) BOOL isActive, isReconnecting, isSeeking, shouldResumeWhenReady, shouldRecoverWhenReachable, isAudioSessionInitialized;
 
 
 @property (strong,nonatomic) AVMediaSelectionGroup *subtitles;
@@ -105,16 +103,6 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 
 #pragma mark - Lifecycle
 
-+ (void)initialize {
-	if (self == [AVTPlayer class]) {
-        [AVTAudioSession.sharedInstance activate:^(BOOL activated, NSError *error) {
-            if (error) {
-                NSLog(@"!! Failed to activate audio session: %@", error.localizedDescription);
-            }
-        }];
-    }
-}
-
 - (id)init {
     if (self = [super init]) {
         _backgroundTask = UIBackgroundTaskInvalid;
@@ -143,21 +131,6 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         [NSNotificationCenter.defaultCenter addObserver:self
                                                selector:@selector(applicationDidBecomeActive)
                                                    name:UIApplicationDidBecomeActiveNotification
-                                                 object:nil];
-        
-        [NSNotificationCenter.defaultCenter addObserver:self
-                                               selector:@selector(beginInterruption:)
-                                                   name:AVTAudioSessionBeginInterruption
-                                                 object:nil];
-        
-        [NSNotificationCenter.defaultCenter addObserver:self
-                                               selector:@selector(endInterruption:)
-                                                   name:AVTAudioSessionEndInterruption
-                                                 object:nil];
-        
-        [NSNotificationCenter.defaultCenter addObserver:self
-                                               selector:@selector(audioRouteChanged:)
-                                                   name:AVTAudioSessionRouteChanged
                                                  object:nil];
         
         [self setupPlayer];
@@ -203,18 +176,21 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     [self teardownPlayer];
     
     DBG(@"Setting up player");
-
-    [self willChangeValueForKey:@"player"]; {
-        self.player = [[AVPlayer alloc] init];
-        self.playerLayer.player = self.player;
-        
-        if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:didSetupPlayer:)]) {
-            [self.akamaiDelegate player:self didSetupPlayer:self.player];
-        }
-        [self.player addObserver:self forKeyPath:@"currentItem" options:observationOptions context:&AVPlayerItemChangedContext];
-        [self.player addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerStatusContext];
-        [self.player addObserver:self forKeyPath:@"rate" options:observationOptions context:&AVPlayerRateContext];
-    } [self didChangeValueForKey:@"player"];
+    
+    @synchronized(self) {
+        [self willChangeValueForKey:@"player"]; {
+            self.player = [[AVPlayer alloc] init];
+            self.playerLayer.player = self.player;
+            
+            if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:didSetupPlayer:)]) {
+                [self.akamaiDelegate player:self didSetupPlayer:self.player];
+            }
+            
+            [self.player addObserver:self forKeyPath:@"currentItem" options:observationOptions context:&AVPlayerItemChangedContext];
+            [self.player addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerStatusContext];
+            [self.player addObserver:self forKeyPath:@"rate" options:observationOptions context:&AVPlayerRateContext];
+        } [self didChangeValueForKey:@"player"];
+    }
 }
 
 - (void)teardownPlayer {
@@ -223,27 +199,40 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     
     DBG(@"Tearing down player");
     
-    [self willChangeValueForKey:@"player"]; {
-        if (self.player.currentItem && ![self.player.currentItem isKindOfClass:NSNull.class]) {
-            DBG(@"-- Removing AVPlayerItem observers");
+    @synchronized(self) {
+        [self willChangeValueForKey:@"player"]; {
+            @try {
+                if (self.player.currentItem && ![self.player.currentItem isKindOfClass:NSNull.class]) {
+                    DBG(@"-- Removing AVPlayerItem observers");
+                    
+                    [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.player.currentItem];
+                    
+                    [self.player.currentItem removeObserver:self forKeyPath:@"status" context:&AVPlayerItemStatusContext];
+                    [self.player.currentItem removeObserver:self forKeyPath:@"playbackBufferEmpty" context:&AVPlayerItemBufferEmptyContext];
+                    [self.player.currentItem removeObserver:self forKeyPath:@"playbackLikelyToKeepUp" context:&AVPlayerItemLikelyToKeepUpContext];
+                }
+            }
+            @catch (NSException *exception) {
+                NSLog(@"Failed to remove playerItem observers: %@", exception.description);
+            }
             
-            [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.player.currentItem];
+            @try {
+                
+                [self.player removeObserver:self forKeyPath:@"currentItem" context:&AVPlayerItemChangedContext];
+                [self.player removeObserver:self forKeyPath:@"status" context:&AVPlayerStatusContext];
+                [self.player removeObserver:self forKeyPath:@"rate" context:&AVPlayerRateContext];
+            }
+            @catch (NSException *exception) {
+                NSLog(@"Failed to remove player observers: %@", exception.description);
+            }
             
-            [self.player.currentItem removeObserver:self forKeyPath:@"status" context:&AVPlayerItemStatusContext];
-            [self.player.currentItem removeObserver:self forKeyPath:@"playbackBufferEmpty" context:&AVPlayerItemBufferEmptyContext];
-            [self.player.currentItem removeObserver:self forKeyPath:@"playbackLikelyToKeepUp" context:&AVPlayerItemLikelyToKeepUpContext];
-        }
-        
-        [self.player removeObserver:self forKeyPath:@"currentItem" context:&AVPlayerItemChangedContext];
-        [self.player removeObserver:self forKeyPath:@"status" context:&AVPlayerStatusContext];
-        [self.player removeObserver:self forKeyPath:@"rate" context:&AVPlayerRateContext];
-        
-        if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:willReleasePlayer:)]) {
-            [self.akamaiDelegate player:self willReleasePlayer:self.player];
-        }
-        
-        self.player = nil;
-    } [self didChangeValueForKey:@"player"];
+            if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:willReleasePlayer:)]) {
+                [self.akamaiDelegate player:self willReleasePlayer:self.player];
+            }
+            
+            self.player = nil;
+        } [self didChangeValueForKey:@"player"];
+    }
 }
 
 #pragma mark - Methods (private): Background task
@@ -352,7 +341,23 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 #pragma mark - Methods (public): Control
 
 - (void)play {
-    self.playbackOutputRoute = AVTAudioSession.sharedInstance.outputRoute;
+    if (!self.isAudioSessionInitialized) {
+        self.isAudioSessionInitialized = YES;
+        
+        AVAudioSession* session = [AVAudioSession sharedInstance];
+        [session setCategory:AVAudioSessionCategoryPlayback error:nil];
+        [session setActive:YES error:nil];
+        
+        [NSNotificationCenter.defaultCenter addObserver:self
+                                               selector:@selector(applicationDidBecomeActive)
+                                                   name:AVAudioSessionInterruptionNotification
+                                                 object:nil];
+        
+        [NSNotificationCenter.defaultCenter addObserver:self
+                                               selector:@selector(applicationDidBecomeActive)
+                                                   name:AVAudioSessionRouteChangeNotification
+                                                 object:nil];
+    }
     
     self.state = (self.isReconnecting) ? AVTPlayerStateReconnecting : AVTPlayerStateConnecting;
     
@@ -460,22 +465,28 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     
     DBG(@"PlayerItem changed");
     
-    if (oldItem && ![oldItem isKindOfClass:NSNull.class]) {
-        DBG(@"-- Removing old observers");
-        [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:oldItem];
-        [oldItem removeObserver:self forKeyPath:@"status" context:&AVPlayerItemStatusContext];
-        [oldItem removeObserver:self forKeyPath:@"playbackBufferEmpty" context:&AVPlayerItemBufferEmptyContext];
-        [oldItem removeObserver:self forKeyPath:@"playbackLikelyToKeepUp" context:&AVPlayerItemLikelyToKeepUpContext];
+    @try {
+        if (oldItem && ![oldItem isKindOfClass:NSNull.class]) {
+            DBG(@"-- Removing old observers");
+            [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:oldItem];
+            [oldItem removeObserver:self forKeyPath:@"status" context:&AVPlayerItemStatusContext];
+            [oldItem removeObserver:self forKeyPath:@"playbackBufferEmpty" context:&AVPlayerItemBufferEmptyContext];
+            [oldItem removeObserver:self forKeyPath:@"playbackLikelyToKeepUp" context:&AVPlayerItemLikelyToKeepUpContext];
+        }
     }
-    
-    if (newItem && ![newItem isKindOfClass:NSNull.class]) {
-        DBG(@"-- Adding observers");
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(handlePlayerItemDidPlayToEnd:) name:AVPlayerItemDidPlayToEndTimeNotification object:newItem];
-        [newItem addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerItemStatusContext];
-        [newItem addObserver:self forKeyPath:@"playbackBufferEmpty" options:observationOptions context:&AVPlayerItemBufferEmptyContext];
-        [newItem addObserver:self forKeyPath:@"playbackLikelyToKeepUp" options:observationOptions context:&AVPlayerItemLikelyToKeepUpContext];
-        
-        [self resume];
+    @catch (NSException *exception) {
+        NSLog(@"Failed to remove old observers: %@", exception.description);
+    }
+    @finally {
+        if (newItem && ![newItem isKindOfClass:NSNull.class]) {
+            DBG(@"-- Adding observers");
+            [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(handlePlayerItemDidPlayToEnd:) name:AVPlayerItemDidPlayToEndTimeNotification object:newItem];
+            [newItem addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerItemStatusContext];
+            [newItem addObserver:self forKeyPath:@"playbackBufferEmpty" options:observationOptions context:&AVPlayerItemBufferEmptyContext];
+            [newItem addObserver:self forKeyPath:@"playbackLikelyToKeepUp" options:observationOptions context:&AVPlayerItemLikelyToKeepUpContext];
+            
+            [self resume];
+        }
     }
 }
 
@@ -594,30 +605,35 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 
 #pragma mark - Notifications: Audio session
 
-- (void)beginInterruption:(NSNotification *)notification {
-    if (self.isPlaying) {
-        DBG(@"Interrupted -- pausing");
-        [self stopWithEndReached:NO settingState:AVTPlayerStateInterrupted];
-    }
-}
-
-- (void)endInterruption:(NSNotification *)notification {
-    if (self.state == AVTPlayerStateInterrupted) {
-        DBG(@"Interruption ended -- resuming");
-        [self play];
-    }
-}
-
-- (void)audioRouteChanged:(NSNotification *)notification {
-    if (AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteHeadphones
-        && AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteBluetoothHandsfree
-        && AVTAudioSession.sharedInstance.outputRoute != AVTAudioSessionOutputRouteAirPlay
-        && AVTAudioSession.sharedInstance.outputRoute != self.playbackOutputRoute) {
-        if (self.isPlaying && self.shouldPauseWhenRouteChanges) {
-            DBG(@"Audio route changed -- pausing");
-            [self pause];
+- (void)audioSessionInterrupted:(NSNotification *)notification {
+    AVAudioSessionInterruptionType interruptionType = (AVAudioSessionInterruptionType)[notification.userInfo[AVAudioSessionInterruptionTypeKey] unsignedIntegerValue];
+    
+    switch (interruptionType) {
+        case AVAudioSessionInterruptionTypeBegan: {
+            DBG(@"Interrupted -- pausing");
+            [self stopWithEndReached:NO settingState:AVTPlayerStateInterrupted];
+            break;
         }
+            
+        case AVAudioSessionInterruptionTypeEnded: {
+            AVAudioSessionInterruptionOptions options = (AVAudioSessionInterruptionOptions)[notification.userInfo[AVAudioSessionInterruptionOptionKey] unsignedIntegerValue];
+            
+            if (options == AVAudioSessionInterruptionOptionShouldResume) {
+                if (self.state == AVTPlayerStateInterrupted) {
+                    DBG(@"Interruption ended -- resuming");
+                    [self play];
+                }
+            }
+            break;
+        }
+            
+        default:
+            break;
     }
+}
+
+- (void)audioSessionRouteChanged:(NSNotification *)notification {
+    NSLog(@"Route changed: %@", notification.userInfo);
 }
 
 #pragma mark - Notification: Player item

@@ -16,6 +16,5 @@
 
 #ifndef __H_AV_TOOLKIT
 #define __H_AV_TOOLKIT
-#import "AVTAudioSession.h"
 #import "AVTPlayer.h"
 #endif
