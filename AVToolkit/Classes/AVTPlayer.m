@@ -178,18 +178,21 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     DBG(@"Setting up player");
     
     @synchronized(self) {
-        [self willChangeValueForKey:@"player"]; {
-            self.player = [[AVPlayer alloc] init];
-            self.playerLayer.player = self.player;
-            
-            if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:didSetupPlayer:)]) {
-                [self.akamaiDelegate player:self didSetupPlayer:self.player];
-            }
-            
-            [self.player addObserver:self forKeyPath:@"currentItem" options:observationOptions context:&AVPlayerItemChangedContext];
-            [self.player addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerStatusContext];
-            [self.player addObserver:self forKeyPath:@"rate" options:observationOptions context:&AVPlayerRateContext];
-        } [self didChangeValueForKey:@"player"];
+        [self willChangeValueForKey:@"player"];
+        self.player = [[AVPlayer alloc] init];
+        [self didChangeValueForKey:@"player"];
+        
+        self.player.allowsExternalPlayback = YES;
+        
+        self.playerLayer.player = self.player;
+        
+        if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:didSetupPlayer:)]) {
+            [self.akamaiDelegate player:self didSetupPlayer:self.player];
+        }
+        
+        [self.player addObserver:self forKeyPath:@"currentItem" options:observationOptions context:&AVPlayerItemChangedContext];
+        [self.player addObserver:self forKeyPath:@"status" options:observationOptions context:&AVPlayerStatusContext];
+        [self.player addObserver:self forKeyPath:@"rate" options:observationOptions context:&AVPlayerRateContext];
     }
 }
 
@@ -200,38 +203,38 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     DBG(@"Tearing down player");
     
     @synchronized(self) {
-        [self willChangeValueForKey:@"player"]; {
-            @try {
-                if (self.player.currentItem && ![self.player.currentItem isKindOfClass:NSNull.class]) {
-                    DBG(@"-- Removing AVPlayerItem observers");
-                    
-                    [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.player.currentItem];
-                    
-                    [self.player.currentItem removeObserver:self forKeyPath:@"status" context:&AVPlayerItemStatusContext];
-                    [self.player.currentItem removeObserver:self forKeyPath:@"playbackBufferEmpty" context:&AVPlayerItemBufferEmptyContext];
-                    [self.player.currentItem removeObserver:self forKeyPath:@"playbackLikelyToKeepUp" context:&AVPlayerItemLikelyToKeepUpContext];
-                }
-            }
-            @catch (NSException *exception) {
-                NSLog(@"Failed to remove playerItem observers: %@", exception.description);
-            }
-            
-            @try {
+        @try {
+            if (self.player.currentItem && ![self.player.currentItem isKindOfClass:NSNull.class]) {
+                DBG(@"-- Removing AVPlayerItem observers");
                 
-                [self.player removeObserver:self forKeyPath:@"currentItem" context:&AVPlayerItemChangedContext];
-                [self.player removeObserver:self forKeyPath:@"status" context:&AVPlayerStatusContext];
-                [self.player removeObserver:self forKeyPath:@"rate" context:&AVPlayerRateContext];
+                [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.player.currentItem];
+                
+                [self.player.currentItem removeObserver:self forKeyPath:@"status" context:&AVPlayerItemStatusContext];
+                [self.player.currentItem removeObserver:self forKeyPath:@"playbackBufferEmpty" context:&AVPlayerItemBufferEmptyContext];
+                [self.player.currentItem removeObserver:self forKeyPath:@"playbackLikelyToKeepUp" context:&AVPlayerItemLikelyToKeepUpContext];
             }
-            @catch (NSException *exception) {
-                NSLog(@"Failed to remove player observers: %@", exception.description);
-            }
+        }
+        @catch (NSException *exception) {
+            NSLog(@"Failed to remove playerItem observers: %@", exception.description);
+        }
+        
+        @try {
             
-            if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:willReleasePlayer:)]) {
-                [self.akamaiDelegate player:self willReleasePlayer:self.player];
-            }
-            
-            self.player = nil;
-        } [self didChangeValueForKey:@"player"];
+            [self.player removeObserver:self forKeyPath:@"currentItem" context:&AVPlayerItemChangedContext];
+            [self.player removeObserver:self forKeyPath:@"status" context:&AVPlayerStatusContext];
+            [self.player removeObserver:self forKeyPath:@"rate" context:&AVPlayerRateContext];
+        }
+        @catch (NSException *exception) {
+            NSLog(@"Failed to remove player observers: %@", exception.description);
+        }
+        
+        if (self.akamaiDelegate && [self.akamaiDelegate respondsToSelector:@selector(player:willReleasePlayer:)]) {
+            [self.akamaiDelegate player:self willReleasePlayer:self.player];
+        }
+        
+        [self willChangeValueForKey:@"player"];
+        self.player = nil;
+        [self didChangeValueForKey:@"player"];
     }
 }
 
