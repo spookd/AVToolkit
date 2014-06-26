@@ -642,7 +642,7 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 #pragma mark - Notification: Player item
 
 - (void)handlePlayerItemDidPlayToEnd:(NSNotification *)notification {
-    [self stopWithEndReached:YES settingState:AVTPlayerStateStopped];
+    [self stopWithEndReached:YES settingState:AVTPlayerStateStoppedEndReached];
 }
 
 #pragma mark - Properties: Read + write
@@ -770,7 +770,7 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 }
 
 - (BOOL)isPlaying {
-    return !(self.state == AVTPlayerStateStopped || self.state == AVTPlayerStatePaused || self.state == AVTPlayerStateInterrupted);
+    return !(self.state == AVTPlayerStateStopped || self.state == AVTPlayerStateStoppedEndReached || self.state == AVTPlayerStatePaused || self.state == AVTPlayerStateInterrupted);
 }
 
 #pragma mark - Properties: Readonly

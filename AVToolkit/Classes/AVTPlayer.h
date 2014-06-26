@@ -54,6 +54,8 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
     AVTPlayerStatePaused,
     /** Currently stopped (livestream) or we've reached the end of the current item with a finite duration */
     AVTPlayerStateStopped,
+    /** Currently stopped (livestream) or we've reached the end of the current item with a finite duration */
+    AVTPlayerStateStoppedEndReached,
     /** Seeking to a specific position on our stream */
     AVTPlayerStateSeeking,
     /** Interrupted by an incoming call, another app smashing ours .. or something like that  */
