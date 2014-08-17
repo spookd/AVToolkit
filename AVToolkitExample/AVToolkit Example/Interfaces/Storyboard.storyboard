@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5053" systemVersion="12E55" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="BTt-r7-fJD">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5056" systemVersion="13C64" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="BTt-r7-fJD">
     <dependencies>
         <deployment defaultVersion="1536" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3733"/>
@@ -91,20 +91,12 @@
                                     <action selector="presetPressed:" destination="e0f-F2-a08" eventType="valueChanged" id="6uU-s5-MwU"/>
                                 </connections>
                             </segmentedControl>
-                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="48I-4j-kUl">
-                                <rect key="frame" x="251" y="88" width="51" height="31"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <connections>
-                                    <action selector="tottleSubtitles:" destination="e0f-F2-a08" eventType="valueChanged" id="EKj-Ff-81S"/>
-                                </connections>
-                            </switch>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="gWg-dm-oHz" firstAttribute="leading" secondItem="4Sk-LW-IUc" secondAttribute="leading" constant="20" id="1zu-XM-3uu"/>
                             <constraint firstItem="uHP-eB-TWT" firstAttribute="leading" secondItem="VOk-KZ-CY2" secondAttribute="trailing" constant="10" id="3Fs-oN-7Zy"/>
                             <constraint firstAttribute="trailing" secondItem="uHP-eB-TWT" secondAttribute="trailing" constant="89" id="7Vx-1B-w2O"/>
-                            <constraint firstItem="48I-4j-kUl" firstAttribute="leading" secondItem="uHP-eB-TWT" secondAttribute="trailing" constant="20" id="89r-if-Cth"/>
                             <constraint firstItem="uHP-eB-TWT" firstAttribute="leading" secondItem="VOk-KZ-CY2" secondAttribute="trailing" constant="10" id="9ly-ZW-ATx"/>
                             <constraint firstAttribute="trailing" secondItem="gWg-dm-oHz" secondAttribute="trailing" constant="20" id="AFc-6c-fHz"/>
                             <constraint firstItem="ade-by-2hg" firstAttribute="top" secondItem="gGD-NE-dCZ" secondAttribute="bottom" constant="20" id="Cku-42-ZDE"/>
@@ -115,8 +107,6 @@
                             <constraint firstItem="tuP-rf-OiO" firstAttribute="leading" secondItem="4Sk-LW-IUc" secondAttribute="leading" constant="20" id="Xpk-uu-uOx"/>
                             <constraint firstItem="gWg-dm-oHz" firstAttribute="top" secondItem="4nR-y6-PbC" secondAttribute="bottom" constant="15" id="aaz-28-qLP"/>
                             <constraint firstItem="uHP-eB-TWT" firstAttribute="top" secondItem="z4N-VU-o0N" secondAttribute="bottom" constant="20" id="aiy-KN-PQn"/>
-                            <constraint firstAttribute="trailing" secondItem="48I-4j-kUl" secondAttribute="trailing" constant="20" id="cFL-3l-ZTr"/>
-                            <constraint firstItem="48I-4j-kUl" firstAttribute="top" secondItem="z4N-VU-o0N" secondAttribute="bottom" constant="24" id="dmG-pV-KIr"/>
                             <constraint firstAttribute="trailing" secondItem="gGD-NE-dCZ" secondAttribute="trailing" constant="20" id="jKS-wF-MqO"/>
                             <constraint firstItem="4nR-y6-PbC" firstAttribute="top" secondItem="uHP-eB-TWT" secondAttribute="bottom" constant="5" id="mWl-jQ-chE"/>
                             <constraint firstItem="tuP-rf-OiO" firstAttribute="top" secondItem="gWg-dm-oHz" secondAttribute="bottom" constant="10" id="muu-8C-Zg9"/>
@@ -125,12 +115,18 @@
                             <constraint firstItem="VOk-KZ-CY2" firstAttribute="leading" secondItem="4Sk-LW-IUc" secondAttribute="leading" constant="20" id="wdN-yn-UuW"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" title="AVTPlayer Example" id="eBS-l0-UQZ"/>
+                    <navigationItem key="navigationItem" title="AVTPlayer Example" id="eBS-l0-UQZ">
+                        <barButtonItem key="rightBarButtonItem" systemItem="bookmarks" id="Iae-LS-YhU">
+                            <connections>
+                                <action selector="selectSubtitles:" destination="e0f-F2-a08" id="wf9-lp-WlN"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <connections>
                         <outlet property="positionSlider" destination="4nR-y6-PbC" id="s1N-k1-yAN"/>
                         <outlet property="segmentedControl" destination="gWg-dm-oHz" id="tuT-fL-MMK"/>
                         <outlet property="statusLabel" destination="uHP-eB-TWT" id="umQ-l5-Y6F"/>
-                        <outlet property="subtitleSwitch" destination="48I-4j-kUl" id="4MM-Kg-d2f"/>
+                        <outlet property="subtitleBarButton" destination="Iae-LS-YhU" id="brj-GA-G8j"/>
                         <outlet property="textField" destination="tuP-rf-OiO" id="nm5-r0-EVY"/>
                         <outlet property="textView" destination="gGD-NE-dCZ" id="47P-J8-EOQ"/>
                         <outlet property="toggleButton" destination="VOk-KZ-CY2" id="Ijx-ny-259"/>

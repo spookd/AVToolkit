@@ -31,7 +31,7 @@ void ensure_main_thread(void (^block)(void)) {
 
 @end
 
-@interface AVTPlayerViewController() <UITextFieldDelegate, UIAlertViewDelegate> {
+@interface AVTPlayerViewController() <UITextFieldDelegate, UIAlertViewDelegate,UIActionSheetDelegate> {
     UIImage *playImage, *stopImage;
     NSTimer *positionTimer, *fooTimer;
     UIAlertView *failedToPlayAlert;
@@ -154,9 +154,40 @@ void ensure_main_thread(void (^block)(void)) {
                                          otherButtonTitles:@"OK", nil];
     [failedToPlayAlert show];
 }
-- (IBAction)tottleSubtitles:(UISwitch *)sender {
-    AVTPlayer *player = [AVTPlayer defaultPlayer];
-        [player changeSubtitlesTo:sender.isOn?player.availableSubtitles.firstObject:nil];
+- (IBAction)selectSubtitles:(id)sender {
+   AVTPlayer *player = [AVTPlayer defaultPlayer];
+
+    UIActionSheet *selectSubtitlesActionSheet = [[UIActionSheet alloc] init];
+    selectSubtitlesActionSheet.title = @"subtitles";
+    for (AVMediaSelectionOption *option in player.availableSubtitles) {
+        NSString *buttonTitle = @"";
+        if (option.locale) {
+            buttonTitle = [NSString stringWithFormat:@"(%@) ",option.locale.localeIdentifier];
+        }
+        buttonTitle = [buttonTitle stringByAppendingString:option.displayName];
+        [selectSubtitlesActionSheet addButtonWithTitle:buttonTitle];
+    }
+    
+    [selectSubtitlesActionSheet addButtonWithTitle:@"automatic"];
+    [selectSubtitlesActionSheet addButtonWithTitle:@"none"];
+    
+    selectSubtitlesActionSheet.delegate = self;
+    
+    [selectSubtitlesActionSheet showFromBarButtonItem:sender animated:YES];
+    [selectSubtitlesActionSheet performSelector:@selector(dismissAnimated:) withObject:nil afterDelay:3.0f];
+    
+    
+   //     [player changeSubtitlesTo:sender.isOn?player.availableSubtitles.firstObject:nil];
+}
+
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex{
+    if (buttonIndex < actionSheet.numberOfButtons - 2) {
+        [AVTPlayer.defaultPlayer changeSubtitlesTo:AVTPlayer.defaultPlayer.availableSubtitles[buttonIndex]];
+    } else if (buttonIndex == actionSheet.numberOfButtons) { // set to auto
+        [AVTPlayer.defaultPlayer changeSubtitlesToAutomatic];
+    } else {
+        [AVTPlayer.defaultPlayer changeSubtitlesTo:nil];
+    }
 }
 
 - (IBAction)togglePressed:(id)sender {
@@ -271,7 +302,7 @@ void ensure_main_thread(void (^block)(void)) {
                 positionSlider.maximumValue = 0.f;
                 toggleButton.enabled = (AVTPlayer.defaultPlayer.URL != nil);
             } else if ([keyPath isEqualToString:@"availableSubtitles"]){
-                self.subtitleSwitch.enabled = AVTPlayer.defaultPlayer.availableSubtitles.count > 0;
+                self.subtitleBarButton.enabled = AVTPlayer.defaultPlayer.availableSubtitles.count > 0;
             }
         });
     }

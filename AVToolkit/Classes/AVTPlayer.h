@@ -107,10 +107,15 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
  Change subtitles
  Use one of the available subtitles from property availableSubtiltles.
  
- @note nil or not available locale result in no subtitle
+ @note nil or not available option result in no subtitle
+ @note changeSubtitlesTo:<player>.availableSubtitles.firstObject will give you the default subtitles
  */
--(void)changeSubtitlesTo:(NSLocale*) locale;
-
+-(void)changeSubtitlesTo:(AVMediaSelectionOption *)subtitleOption;
+/**
+ Set subtitle to automatic
+ 
+ */
+-(void)changeSubtitlesToAutomatic;
 /**
  Current URL.
  
@@ -196,8 +201,14 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
 // add subtitle support
 /**
  if the stream/source contains subtitles, this array will list the available subtitles
+ Array of AVMediaSelectionOption
  
  @note KVO complaint.
  */
 @property (readonly,nonatomic) NSArray *availableSubtitles;
+/**
+ Current selected media option (what is the current selected subtitle)
+ */
+@property (readonly,nonatomic) AVMediaSelectionOption *currentSubtitle;
+
 @end
