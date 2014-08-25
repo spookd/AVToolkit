@@ -352,12 +352,12 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         [session setActive:YES error:nil];
         
         [NSNotificationCenter.defaultCenter addObserver:self
-                                               selector:@selector(applicationDidBecomeActive)
+                                               selector:@selector(audioSessionInterrupted:)
                                                    name:AVAudioSessionInterruptionNotification
                                                  object:nil];
         
         [NSNotificationCenter.defaultCenter addObserver:self
-                                               selector:@selector(applicationDidBecomeActive)
+                                               selector:@selector(audioSessionRouteChanged:)
                                                    name:AVAudioSessionRouteChangeNotification
                                                  object:nil];
     }
