@@ -689,7 +689,6 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     
     self.subtitle = nil;
     
-    [self teardownPlayer];
     [self setupPlayer];
     
     [self willChangeValueForKey:@"availableSubtitles"];
