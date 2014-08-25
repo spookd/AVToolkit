@@ -698,7 +698,6 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     
     [self stopWithEndReached:YES settingState:AVTPlayerStateStopped];
     
-    [self teardownPlayer];
     [self setupPlayer];
     
     [self willChangeValueForKey:@"availableSubtitles"];
