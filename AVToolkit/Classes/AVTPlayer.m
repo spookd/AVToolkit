@@ -446,6 +446,9 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         return;
     
     DBG(@"Player rate changed from '%f' to '%f'", oldRate, newRate);
+    
+    if (newRate == 0.f && self.state == AVTPlayerStatePlaying)
+        self.state = AVTPlayerStatePaused;
 }
 
 - (void)handlePlayerItemChanged:(NSDictionary *)change {
