@@ -104,14 +104,6 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
 - (void)pause;
 
 /**
- Change subtitles
- Use one of the available subtitles from property availableSubtiltles.
- 
- @note nil or not available locale result in no subtitle
- */
--(void)changeSubtitlesTo:(NSLocale*) locale;
-
-/**
  Current URL.
  
  @warning You cannot set the URL to be the same as the current one (call will return).
@@ -192,12 +184,14 @@ typedef NS_ENUM(NSUInteger, AVTPlayerState) {
  Latest 250 debug messages logged.
  */
 @property(nonatomic, readonly) NSArray *log;
-
-// add subtitle support
 /**
- if the stream/source contains subtitles, this array will list the available subtitles
+ An array of AVMediaSelectionOption available in the current stream.
  
  @note KVO complaint.
  */
-@property (readonly,nonatomic) NSArray *availableSubtitles;
+@property(readonly, nonatomic) NSArray *availableSubtitles;
+/**
+ Set active subtitle. If nil, subtitles will be disabled.
+ */
+@property(nonatomic, readwrite) AVMediaSelectionOption *subtitle;
 @end

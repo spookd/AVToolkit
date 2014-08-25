@@ -371,20 +371,6 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     [self stopWithEndReached:NO settingState:AVTPlayerStatePaused];
 }
 
--(void)changeSubtitlesTo:(NSLocale *)locale{
-    __block AVMediaSelectionOption *option;
-    [self.subtitles.options enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-        option = obj;
-        if ([option.locale.localeIdentifier isEqualToString:locale.localeIdentifier]) {
-            *stop = YES;
-        } else {
-            option = nil; // if not found then none
-        }
-    }];
-    
-    [self.player.currentItem selectMediaOption:option inMediaSelectionGroup:self.subtitles];
-}
-
 #pragma mark - Methods (public): Remote control event handler
 
 - (void)remoteControlReceivedWithEvent:(UIEvent *)event {
@@ -501,19 +487,14 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     if (valueChangeKind == NSKeyValueChangeSetting && ![change[NSKeyValueChangeNewKey] isEqual:change[NSKeyValueChangeOldKey]]) {
         switch (self.player.currentItem.status) {
             case AVPlayerItemStatusReadyToPlay: {
-                
-                // collecting the options from the stream
-                // TODO: collect audio
                 NSArray *group = [self.player.currentItem.asset availableMediaCharacteristicsWithMediaSelectionOptions];
                 
                 if ([group containsObject:AVMediaCharacteristicLegible]) {
-                    
-
                     self.subtitles = [self.player.currentItem.asset mediaSelectionGroupForMediaCharacteristic:AVMediaCharacteristicLegible];
-                   NSMutableArray *availableSubtitles = [[NSMutableArray alloc]initWithCapacity:self.subtitles.options.count-1];
+                    NSMutableArray *availableSubtitles = [[NSMutableArray alloc] initWithCapacity:self.subtitles.options.count-1];
                     
                     for (AVMediaSelectionOption *subtitleOption in self.subtitles.options) {
-                        [availableSubtitles addObject:subtitleOption.locale];
+                        [availableSubtitles addObject:subtitleOption];
                     }
                     
                     [self willChangeValueForKey:@"availableSubtitles"];
@@ -648,9 +629,17 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 #pragma mark - Properties: Read + write
 
 - (void)setPosition:(Float64)position {
-    if (self.isLiveStream || position >= self.duration) {
+    if (self.isLiveStream) {
         DBG(@"Cannot seek to %f -- returning", position);
         return;
+    }
+    
+    if (position >= self.duration) {
+        position = self.duration - 1.f;
+    }
+    
+    if (position < 0.f) {
+        position = 0.f;
     }
     
     DBG("Seek to seconds offset: %f", position);
@@ -692,11 +681,13 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 
 -(void)setURL:(NSURL *)URL{
     self.retryPosition = 0.f;
-    
+
     AVPlayerItem *item;
     BOOL isSameHost = (self.reachability && _URL && [_URL.host isEqualToString:URL.host]);
     
     [self stopWithEndReached:YES settingState:AVTPlayerStateStopped];
+    
+    self.subtitle = nil;
     
     [self teardownPlayer];
     [self setupPlayer];
@@ -771,6 +762,11 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
 
 - (BOOL)isPlaying {
     return !(self.state == AVTPlayerStateStopped || self.state == AVTPlayerStateStoppedEndReached || self.state == AVTPlayerStatePaused || self.state == AVTPlayerStateInterrupted);
+}
+
+- (void)setSubtitle:(AVMediaSelectionOption *)subtitle {
+    _subtitle = subtitle;
+    [self.player.currentItem selectMediaOption:_subtitle inMediaSelectionGroup:self.subtitles];
 }
 
 #pragma mark - Properties: Readonly
