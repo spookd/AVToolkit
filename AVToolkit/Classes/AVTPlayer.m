@@ -497,7 +497,8 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
                     NSMutableArray *availableSubtitles = [[NSMutableArray alloc] initWithCapacity:self.subtitles.options.count-1];
                     
                     for (AVMediaSelectionOption *subtitleOption in self.subtitles.options) {
-                        [availableSubtitles addObject:subtitleOption];
+                        if (subtitleOption.isPlayable && subtitleOption.locale != nil)
+                            [availableSubtitles addObject:subtitleOption];
                     }
                     
                     [self willChangeValueForKey:@"availableSubtitles"];
