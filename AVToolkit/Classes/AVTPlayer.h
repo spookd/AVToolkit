@@ -14,7 +14,8 @@
 //  limitations under the License.
 //  
 
-#import <AVFoundation/AVFoundation.h>
+@import AVFoundation;
+@import UIKit;
 
 @class AVTPlayer;
 
