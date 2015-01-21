@@ -182,6 +182,7 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
         self.player = [[AVPlayer alloc] init];
         [self didChangeValueForKey:@"player"];
         
+        self.player.usesExternalPlaybackWhileExternalScreenIsActive = YES;
         self.player.allowsExternalPlayback = YES;
         
         self.playerLayer.player = self.player;
@@ -644,6 +645,10 @@ static const void *AVPlayerItemLikelyToKeepUpContext = (void *)&AVPlayerItemLike
     
     if (position < 0.f) {
         position = 0.f;
+    }
+    
+    if (self.retryPosition != 0.f) {
+        self.retryPosition = 0.f;
     }
     
     DBG("Seek to seconds offset: %f", position);
